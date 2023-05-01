@@ -1,0 +1,93 @@
+Evento
+- Altura da onda de 7 dias
+- Temperatura de 7 dias
+- Probabiliade de precipitação de 7 dias
+
+Topico
+- Altura da onda de vila velha
+- Temperatura de vila velha
+- Raio UV de vila velha
+- Precipitação de vila velha
+- Dia bom para praia
+
+x
+
+- Altura da onda
+- Temperatura
+- Raio UV
+- Probabilidade de Precipitação
+- Dia bom para praia
+
+Por cidade x por `situacao`
+
+Produtor
+- Capsula de API de clima -> dados primitivos (filtra horas já passadas)
+- Capsula API de ondas -> dados primitivos (filtra horas já passadas)
+
+Produtor-cliente
+- Verificador de dia bom para praia -> consome dados primitivos e manda para kafka se for um dia bom para praia
+
+Cliente
+- Consume se é um dia bom para praia-> consome dados complexos
+- Consome temperatura -> consome dados primitivos
+
+
+Observations
+- Como forcast a cada hora muda, precisa deletar o dado antigo e inserir o novo (intervalo de 1h)
+
+Exemplo de weather
+    {
+        "latitude":-20.375,
+        "longitude":-40.375,
+        "generationtime_ms":0.1609325408935547,
+        "utc_offset_seconds":0,
+        "timezone":"GMT",
+        "timezone_abbreviation":"GMT",
+        "elevation":7.0,
+        "hourly_units":
+            {
+                "time":"iso8601",
+                "temperature_2m":"°C",
+                "precipitation_probability":"%"
+            },
+        "hourly":{
+            "time":["2023-04-30T00:00","2023-04-30T01:00","2023-04-30T02:00","2023-04-30T03:00","2023-04-30T04:00",
+                "2023-04-30T05:00","2023-04-30T06:00","2023-04-30T07:00","2023-04-30T08:00","2023-04-30T09:00",
+                "2023-04-30T10:00","2023-04-30T11:00","2023-04-30T12:00","2023-04-30T13:00","2023-04-30T14:00",
+                "2023-04-30T15:00","2023-04-30T16:00","2023-04-30T17:00","2023-04-30T18:00","2023-04-30T19:00",
+                "2023-04-30T20:00","2023-04-30T21:00","2023-04-30T22:00","2023-04-30T23:00"],
+            "temperature_2m":[22.7,22.4,22.1,21.7,21.5,21.3,21.4,21.2,21.1,20.9,21.8,24.2,25.0,26.2,26.3,26.5,
+                26.1,25.8,24.6,24.3,23.9,23.3,22.9,22.5],
+            "precipitation_probability":[55,68,81,94,95,96,97,96,95,94,76,57,39,57,76,94,94,94,94,86,79,71,71,71]
+        }
+    }
+
+    Poderia fazer parsing e ter como evento:
+    {
+        local: x
+        hora: y
+        temperatura: z
+    }
+
+    {
+        local: x
+        hora: y
+        pp: z
+    }
+
+
+Duvidas
+- O que voce recomenda em relacao a tópico e pariticoes. Seria melhor dividir os topicos por cidade e a particioes seriam
+  relacionadas as situacoes/eventos em si, ou se seria melhor dividir os topicos por situacoes e as cidades serem divididas 
+  em particoes? Dessa forma poderiamos utilizar a chave para dividir as particoes por cidade ou por situacao/evento, depende
+  do que for mais ideal.
+- Quando diz que precisamos ao menos 3 situacoes de interesse, isso significa que precisamos de 3 clientes ou pode ser um cliente
+  consumindo 3 dados diferentes. 
+- Para eventos complexos que partem de eventos primitivos, criamos um tipo de cliente que faz pull e depois retorna algo para kafka
+  (push), agindo de forma tanto como cliente quanto produtor? Isso entra dentro daquela especificação de consumir uma situação de 
+  interesse?
+- Como deve ser o cliente? O cliente é interativo? É mais na linha do subscribe, rodando infinitamente até dar unsubscribe (parar de rodar a  
+  aplicação)? Exemplo: fica dando push no clima a cada 1h e para quando o programa for forçado a terminar. Ou o cliente é um cliente que 
+  roda uma unica vez, toma uma ação com base no evento e é encerrado? Exemplo: consome o clima atual e imprime na tela, fim de execução.
+- Como seria o produto final em relação para ser executado na sua maquina? A gente pode fazer um passo a passo, criar containers, etc.
+  
