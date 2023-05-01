@@ -1,10 +1,10 @@
 version: "3.8"
 services:
-    kafka-server2:
+    kafka-server:
         restart: on-failure:5
         build: 
             context: .
-        container_name: kafka-server2
+        container_name: kafka-server
         ports:
             - 9092:9092
             - 2181:2181
@@ -17,4 +17,8 @@ services:
         #     - ALLOW_PLAINTEXT_LISTENER=yes
         #     - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092
         #     - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092
-   
+
+# TODO:
+# - initialize zookeeper
+# - initialize kafka server
+# - create topics
