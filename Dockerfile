@@ -1,12 +1,55 @@
 
-#FROM bitnami/kafka:latest
-FROM openjdk:21-oraclelinux8l
+# Start with ubuntu image
+FROM ubuntu:22.04
 
-WORKDIR /app/
+# Update and install curl
+RUN apt-get update && apt-get install -y 
+RUN apt-get install curl -y
 
-RUN rpm -qa | grep curl
-RUN curl http://archive.apache.org/dist/kafka/3.3.1/kafka_2.13-3.3.1.tgz --output kafka.tgz
-RUN tar -xvzf /kafka.tgz
+ARG DEBIAN_FRONTEND=noninteractive
+ENV TZ=America/Bahia
 
-COPY . /app/
-#ENTRYPOINT ["/bin/bash/"]
+# Install python 3.11
+RUN apt-get install software-properties-common -y
+RUN add-apt-repository ppa:deadsnakes/ppa -y
+RUN apt-get update && apt-get install python3.11 -y
+RUN apt-get install python3-pip -y
+
+# Install Java
+RUN apt-get update && \
+    apt-get install -y openjdk-11-jdk ca-certificates-java && \
+    apt-get clean && \
+    update-ca-certificates -f
+ENV JAVA_HOME /usr/lib/jvm/java-11-openjdk-amd64/
+RUN export JAVA_HOME
+
+# Install Kafka
+RUN curl https://mirrors.estointernet.in/apache/kafka/3.2.0/kafka_2.12-3.2.0.tgz -o kafka_2.12-3.2.0.tgz
+RUN tar -xf kafka_*.tgz 
+RUN rm kafka_*.tgz
+RUN mv kafka_* /kafka
+
+# Create topic
+WORKDIR /kafka
+RUN sed -i 's/log.retention.hours=168/log.retention.hours=1/g' server.properties
+
+# # Create topics
+# COPY create_topics.sh /kafka/create_topics.sh
+# ENTRYPOINT [ "sh", "/kafka/create_topics.sh]
+
+# Set environment variables
+ENV KAFKA_HOME=/kafka \
+    PATH=$PATH:/kafka/bin
+
+WORKDIR /app
+COPY . /app
+
+# Install requirements
+RUN pip3 install -r requirements.txt
+
+# Expose Kafka ports
+EXPOSE 9092 2181
+
+# Start Kafka
+
+# ENTRYPOINT ["sh", "init.sh", "&&", "bash"]
