@@ -2,6 +2,7 @@ from kafka import KafkaProducer
 import requests
 import datetime
 import json
+import time
 
 # TODO:
 # - pull a cada hora
@@ -18,9 +19,10 @@ class WeatherProducer:
         self.producer = KafkaProducer(bootstrap_servers="localhost:9092", value_serializer=lambda v: json.dumps(v).encode('utf-8'))
     
     def on_send_success(self, record):
-        print('topic', record.topic)
-        print('partition', record.partition)
-        print('offset', record.offset)
+        print('NEW DATA:')
+        print('\tTopic: ', record.topic)
+        print('\tPartition: ', record.partition)
+        print('\tOffset: ', record.offset)
 
     # voltar aqui pra ver se ta certo
     def send_data(self, data, topic, key):
@@ -71,6 +73,12 @@ class WeatherProducer:
             self.send_data(str(e_prec), self.prec_topic, e_prec['hora'])
 
         self.producer.flush()
+    
+    def run_forever(self):
+        while True:
+            print('Producing data...')
+            self.run()
+            time.sleep(3600)
         
 obj = WeatherProducer()
-obj.run()
+obj.run_forever()
