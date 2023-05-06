@@ -8,7 +8,7 @@ networks:
 services:
     zookeeper:
         build: 
-            context: Dockerfile
+            context: .
         container_name: zookeeper
         command: sh -c '/kafka/bin/zookeeper-server-start.sh /kafka/config/zookeeper.properties'
         ports:
@@ -16,7 +16,7 @@ services:
 
     kafka:
         build: 
-            context: Dockerfile
+            context: .
         container_name: kafka
         command: sh -c '/kafka/bin/kafka-server-start.sh /kafka/config/server.properties --override zookeeper.connect=zookeeper:2181 --override log.retention.hours=1'
         ports:
@@ -24,7 +24,7 @@ services:
 
     topics:
         build: 
-            context: Dockerfile
+            context: .
         container_name: topics
         command: sh -c './create_topics.sh'
         depends_on:
@@ -33,7 +33,7 @@ services:
 
     development:
         build: 
-            context: Dockerfile
+            context: .
         container_name: dev
         tty: true
         depends_on:
