@@ -11,8 +11,8 @@ import time
 # - fazer o de wave
 
 
-class WaveProducer:
-    wave_topic = 'waveHeight'
+class UvProducer:
+    wave_topic = 'uvIndex'
 
     def __init__(self):
         self.producer = KafkaProducer(bootstrap_servers="kafka:9092", value_serializer=lambda v: json.dumps(v).encode('utf-8'))
@@ -28,29 +28,30 @@ class WaveProducer:
         self.producer.send(topic, data, key=key.encode('utf-8')).add_callback(self.on_send_success)
 
     def request_data(self):
-        url = r"https://marine-api.open-meteo.com/v1/marine?latitude=-20.67&longitude=-40.50&hourly=wave_height&length_unit=metric&timezone=America%2FSao_Paulo"
+        url = r"https://air-quality-api.open-meteo.com/v1/air-quality?latitude=-20.67&longitude=-40.50&hourly=uv_index&timezone=America%2FSao_Paulo"
         response = requests.get(url)
         return response.json()
 
     def filter_data(self, data):
         all_time = data["hourly"]['time']
-        all_wave = data["hourly"]['wave_height']
+        all_uv_index = data["hourly"]['uv_index']
 
         events_wave = []
 
         format = '%Y-%m-%dT%H:%M'
         now = datetime.datetime.now()
         
-        for time, wave in zip(all_time, all_wave):
-            time_formatted = datetime.datetime.strptime(time, format)
+        for time_, uv_index in zip(all_time, all_uv_index):
+            time_formatted = datetime.datetime.strptime(time_, format)
 
-            if time_formatted < now:
+            # if time is less then today date, or if time is more than 3 days from today
+            if time_formatted < now or time_formatted > now + datetime.timedelta(days=2):
                 continue
             
             events_wave.append({
                 'local': 'Guarapari',
-                'hora': time,
-                'temperatura': wave,
+                'hora': time_,
+                'uv_index': uv_index,
             })
 
         return events_wave
@@ -63,6 +64,7 @@ class WaveProducer:
             self.send_data(str(e_wave), self.wave_topic, e_wave['hora'])
 
         self.producer.flush()
+        print(len(events_wave), ' events sent to Kafka')
     
     def run_forever(self):
         while True:
@@ -70,5 +72,5 @@ class WaveProducer:
             self.run()
             time.sleep(3600)
         
-obj = WaveProducer()
+obj = UvProducer()
 obj.run_forever()
