@@ -1,7 +1,6 @@
 {
-    "partitions": [
-      {
-        "topic": "weather",
+    "partitions": 
+        "topic": "temperature",
         "partition": 0,
         "offset": -1
       }
