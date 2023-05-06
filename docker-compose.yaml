@@ -1,24 +1,35 @@
 version: "3.8"
+
+networks:
+  default:
+    name: mynet
+    driver: bridge
+
 services:
-    kafka-server:
-        restart: on-failure:5
+    zookeeper:
         build: 
-            context: .
-        container_name: kafka-server
+            context: Dockerfile
+        container_name: zookeeper
+        command: sh -c '/kafka/bin/zookeeper-server-start.sh /kafka/config/zookeeper.properties'
+        ports:
+            - 2181:2181
+
+    kafka:
+        build: 
+            context: Dockerfile
+        container_name: kafka
+        command: sh -c '/kafka/bin/kafka-server-start.sh /kafka/config/server.properties --override zookeeper.connect=zookeeper:2181 --override log.retention.hours=1'
         ports:
             - 9092:9092
-            - 2181:2181
-        tty: true
-        stdin_open: true
-        volumes:
-            - ./:/app/
-        # environment:
-        #     - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
-        #     - ALLOW_PLAINTEXT_LISTENER=yes
-        #     - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092
-        #     - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092
 
-# TODO:
-# - initialize zookeeper
-# - initialize kafka server
-# - create topics
+    development:
+        restart: on-failure:3
+        build: 
+            context: Dockerfile
+        container_name: dev
+        tty: true
+        depends_on:
+            - zookeeper
+            - kafka
+        volumes:
+            - .:/app
