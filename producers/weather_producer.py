@@ -44,21 +44,21 @@ class WeatherProducer:
         format = '%Y-%m-%dT%H:%M'
         now = datetime.datetime.now()
         
-        for time, temp, prec in zip(all_time, all_temp, all_prec):
-            time_formatted = datetime.datetime.strptime(time, format)
+        for time_, temp, prec in zip(all_time, all_temp, all_prec):
+            time_formatted = datetime.datetime.strptime(time_, format)
 
-            if time_formatted < now:
+            if time_formatted < now or time_formatted > now + datetime.timedelta(days=2):
                 continue
             
             events_temp.append({
                 'local': 'Guarapari',
-                'hora': time,
+                'hora': time_,
                 'temperatura': temp,
             })
 
             events_prec.append({
                 'local': 'Guarapari',
-                'hora': time,
+                'hora': time_,
                 'pp': prec
             })
 
@@ -73,6 +73,7 @@ class WeatherProducer:
             self.send_data(str(e_prec), self.prec_topic, e_prec['hora'])
 
         self.producer.flush()
+        print(len(events_temp), ' events sent to Kafka')
     
     def run_forever(self):
         while True:
