@@ -12,10 +12,10 @@ import time
 
 
 class WaveProducer:
-    wave_topic = 'wave_height'
+    wave_topic = 'waveHeight'
 
     def __init__(self):
-        self.producer = KafkaProducer(bootstrap_servers="localhost:9092", value_serializer=lambda v: json.dumps(v).encode('utf-8'))
+        self.producer = KafkaProducer(bootstrap_servers="kafka:9092", value_serializer=lambda v: json.dumps(v).encode('utf-8'))
     
     def on_send_success(self, record):
         print('NEW DATA:')
