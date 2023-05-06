@@ -1,4 +1,5 @@
-kafka-topics.sh --bootstrap-server localhost:9092 --create --topic wave_height --partitions 3 --replication-factor 1
-kafka-topics.sh --bootstrap-server localhost:9092 --create --topic temperature --partitions 3 --replication-factor 1
-kafka-topics.sh --bootstrap-server localhost:9092 --create --topic precipitation_probability --partitions 3 --replication-factor 1
-kafka-topics.sh --bootstrap-server localhost:9092 --create --topic beach_day --partitions 3 --replication-factor 1
+echo "Creating topics..."
+/kafka/bin/kafka-topics.sh --create --topic waveHeight --partitions 3 --replication-factor 1 --bootstrap-server kafka:9092
+/kafka/bin/kafka-topics.sh --create --topic temperature --partitions 3 --replication-factor 1 --bootstrap-server kafka:9092
+/kafka/bin/kafka-topics.sh --create --topic precipitationProbability --partitions 3 --replication-factor 1 --bootstrap-server kafka:9092
+/kafka/bin/kafka-topics.sh --create --topic beachDay --partitions 3 --replication-factor 1 --bootstrap-server kafka:9092
