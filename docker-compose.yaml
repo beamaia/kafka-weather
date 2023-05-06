@@ -22,8 +22,16 @@ services:
         ports:
             - 9092:9092
 
+    topics:
+        build: 
+            context: Dockerfile
+        container_name: topics
+        command: sh -c './create_topics.sh'
+        depends_on:
+            - zookeeper
+            - kafka
+
     development:
-        restart: on-failure:3
         build: 
             context: Dockerfile
         container_name: dev
@@ -31,5 +39,6 @@ services:
         depends_on:
             - zookeeper
             - kafka
+            - topics
         volumes:
             - .:/app
