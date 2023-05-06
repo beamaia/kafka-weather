@@ -31,11 +31,15 @@ RUN tar -xf kafka_*.tgz
 RUN rm kafka_*.tgz
 RUN mv kafka_* /kafka
 
+ENV KAFKA_HOME=/kafka \
+    PATH=$PATH:/kafka/bin
+    
 WORKDIR /app
 COPY . /app
 
 # Install requirements
 RUN pip3 install -r requirements.txt
+
 
 # Expose Kafka ports
 EXPOSE 9092 2181
