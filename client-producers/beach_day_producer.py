@@ -30,22 +30,21 @@ class BeachHourProducer:
         while len(sorted_data):        
             start = sorted_data.pop(0)
             start_time = start['hora']
-            end_time = start_time.replace(minute=59)
+            end_time = start_time
             aux_time = start_time
 
             while True and len(sorted_data):
-                
                 data_time = sorted_data[0]['hora']
                 if data_time == aux_time + datetime.timedelta(hours=1) and aux_time.day == data_time.day:
                     end = sorted_data.pop(0)
-                    end_time = end['hora'].replace(minute=59)
+                    end_time = end['hora']
                     aux_time = end_time
                 else:
                     break
             
             intervals.append({
                 'inicio': start_time.strftime('%Y-%m-%dT%H:%M'),
-                'fim': end_time.strftime('%Y-%m-%dT%H:%M'),
+                'fim': end_time.replace(minute=59).strftime('%Y-%m-%dT%H:%M'),
             })
 
             if not len(data):
@@ -103,7 +102,7 @@ class BeachHourProducer:
         while True:
             print('Producing data...')
             self.run()
-            time.sleep(3600)
+            time.sleep(300)
         
 obj = BeachHourProducer()
 obj.run_forever()
