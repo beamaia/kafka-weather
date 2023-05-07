@@ -43,6 +43,7 @@ class WeatherProducer:
 
         format = '%Y-%m-%dT%H:%M'
         now = datetime.datetime.now()
+        now = now.replace(minute=0, second=0, microsecond=0)
         
         for time_, temp, prec in zip(all_time, all_temp, all_prec):
             time_formatted = datetime.datetime.strptime(time_, format)
