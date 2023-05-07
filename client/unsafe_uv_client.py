@@ -62,7 +62,6 @@ class UnsafeUvClient:
             return 'Extremo'
         
     def run(self):
-        print("Verificando horarios bons para ir a praia...")
         messages = self.get_messages()
         message = self.filter_data(messages)
 
