@@ -36,10 +36,11 @@ class UvProducer:
         all_time = data["hourly"]['time']
         all_uv_index = data["hourly"]['uv_index']
 
-        events_wave = []
+        events_uv = []
 
         format = '%Y-%m-%dT%H:%M'
         now = datetime.datetime.now()
+        now = now.replace(minute=0, second=0, microsecond=0)
         
         for time_, uv_index in zip(all_time, all_uv_index):
             time_formatted = datetime.datetime.strptime(time_, format)
@@ -48,23 +49,23 @@ class UvProducer:
             if time_formatted < now or time_formatted > now + datetime.timedelta(days=2):
                 continue
             
-            events_wave.append({
+            events_uv.append({
                 'local': 'Guarapari',
                 'hora': time_,
                 'uv_index': uv_index,
             })
 
-        return events_wave
+        return events_uv
 
     def run(self):
         data = self.request_data()
-        events_wave = self.filter_data(data)
+        events_uv = self.filter_data(data)
 
-        for e_wave in events_wave:
+        for e_wave in events_uv:
             self.send_data(str(e_wave), self.wave_topic, e_wave['hora'])
 
         self.producer.flush()
-        print(len(events_wave), ' events sent to Kafka')
+        print(len(events_uv), ' events sent to Kafka')
     
     def run_forever(self):
         while True:
