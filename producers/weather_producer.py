@@ -74,7 +74,7 @@ class WeatherProducer:
             self.send_data(str(e_prec), self.prec_topic, e_prec['hora'])
 
         self.producer.flush()
-        print(len(events_temp), ' events sent to Kafka')
+        print(len(events_temp), ' events sent to Kafka at', datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S'))
     
     def run_forever(self):
         while True:

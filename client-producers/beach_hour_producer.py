@@ -111,6 +111,10 @@ class BeachHourProducer:
         print("Sending data...")
         for data in filtered_data:
             self.send_data(data, self.beach_topic, data['hora'])
+
+        self.producer.flush()
+        print(len(filtered_data), ' events sent to Kafka at', datetime.datetime.now().strftime('%d/%m/%Y %H:%M:%S'))
+    
     
     def run_forever(self):
         while True:

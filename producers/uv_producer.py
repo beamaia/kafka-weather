@@ -65,7 +65,7 @@ class UvProducer:
             self.send_data(str(e_wave), self.wave_topic, e_wave['hora'])
 
         self.producer.flush()
-        print(len(events_uv), ' events sent to Kafka')
+        print(len(events_uv), ' events sent to Kafka at', datetime.datetime.now().strftime('%d/%m/%Y %H:%M:%S'))
     
     def run_forever(self):
         while True:
