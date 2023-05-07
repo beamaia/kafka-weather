@@ -1,3 +1,5 @@
+bin/kafka-configs.sh --bootstrap-server kafka:9092 --entity-type topics --entity-name beachDay --alter --add-config retention.ms=60000
+
 Evento
 - Altura da onda de 7 dias
 - Temperatura de 7 dias
