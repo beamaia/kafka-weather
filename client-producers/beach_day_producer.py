@@ -28,16 +28,17 @@ class BeachHourProducer:
         intervals = []
 
         while len(sorted_data):        
-            start = data.pop(0)
+            start = sorted_data.pop(0)
             start_time = start['hora']
-
+            end_time = start_time.replace(minute=59)
             aux_time = start_time
-            while True and len(data):
+
+            while True and len(sorted_data):
                 
-                data_time = data[0]['hora']
+                data_time = sorted_data[0]['hora']
                 if data_time == aux_time + datetime.timedelta(hours=1) and aux_time.day == data_time.day:
-                    end = data.pop(0)
-                    end_time = end['hora']
+                    end = sorted_data.pop(0)
+                    end_time = end['hora'].replace(minute=59)
                     aux_time = end_time
                 else:
                     break
@@ -94,6 +95,9 @@ class BeachHourProducer:
         print("Sending data...")
         for data in transformed_data:
             self.send_data(data, self.beach_day_topic, data['inicio'])
+
+        self.producer.flush()
+        print(len(transformed_data), ' events sent to Kafka at', datetime.datetime.now().strftime('%d/%m/%Y %H:%M:%S'))
     
     def run_forever(self):
         while True:
