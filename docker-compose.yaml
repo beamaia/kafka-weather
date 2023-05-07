@@ -1,4 +1,4 @@
-version: "3.8"
+version: "2"
 
 networks:
   default:
@@ -18,7 +18,7 @@ services:
         build: 
             context: .
         container_name: kafka
-        command: sh -c '/kafka/bin/kafka-server-start.sh /kafka/config/server.properties --override zookeeper.connect=zookeeper:2181 --override log.retention.hours=1'
+        command: sh -c '/kafka/bin/kafka-server-start.sh /kafka/config/server.properties --override zookeeper.connect=zookeeper:2181 --override log.retention.minutes=59 --override log.retention.check.interval.ms=300000'
         ports:
             - 9092:9092
 
