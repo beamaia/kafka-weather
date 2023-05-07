@@ -21,6 +21,7 @@ class BeachDayClient:
 
         return messages
     
+
     def get_messages(self):
         messages = []
 
@@ -40,6 +41,7 @@ class BeachDayClient:
     def run(self):
         print("Verificando horarios bons para ir a praia...")
         messages = self.get_messages()
+        messages = sorted(messages, key=lambda x: x['inicio'])
 
         for message in messages:
             start = message['inicio']
