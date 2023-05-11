@@ -3,12 +3,7 @@ import requests
 import datetime
 import json
 import time
-
-# TODO:
-# - pull a cada hora
-# - verificar se tá sendo deletado a cada hora
-# - pq partição sempre é zero
-# - fazer o de wave
+from cities import CITIES
 
 
 class WeatherProducer:
@@ -28,12 +23,12 @@ class WeatherProducer:
     def send_data(self, data, topic, key):
         self.producer.send(topic, data, key=key.encode('utf-8')).add_callback(self.on_send_success)
 
-    def request_data(self):
-        url = r"https://api.open-meteo.com/v1/forecast?latitude=-20.67&longitude=-40.50&hourly=temperature_2m,precipitation_probability&forecast_days=3&timezone=America%2FSao_Paulo"
+    def request_data(self, city):
+        url = fr"https://api.open-meteo.com/v1/forecast?{city}&hourly=temperature_2m,precipitation_probability&forecast_days=3&timezone=America%2FSao_Paulo"
         response = requests.get(url)
         return response.json()
 
-    def filter_data(self, data):
+    def filter_data(self, data, city):
         all_time = data["hourly"]['time']
         all_temp = data["hourly"]['temperature_2m']
         all_prec = data["hourly"]['precipitation_probability']
@@ -52,26 +47,26 @@ class WeatherProducer:
                 continue
             
             events_temp.append({
-                'local': 'Guarapari',
+                'local': city,
                 'hora': time_,
                 'temperatura': temp,
             })
 
             events_prec.append({
-                'local': 'Guarapari',
+                'local': city,
                 'hora': time_,
                 'pp': prec
             })
 
         return events_temp, events_prec
 
-    def run(self):
-        data = self.request_data()
-        events_temp, events_prec = self.filter_data(data)
+    def run(self, city):
+        data = self.request_data(CITIES[city])
+        events_temp, events_prec = self.filter_data(data, city)
 
         for e_temp, e_prec in zip(events_temp, events_prec):
-            self.send_data(str(e_temp), self.temp_topic, e_temp['hora'])
-            self.send_data(str(e_prec), self.prec_topic, e_prec['hora'])
+            self.send_data(str(e_temp), self.temp_topic, city)
+            self.send_data(str(e_prec), self.prec_topic, city)
 
         self.producer.flush()
         print(len(events_temp), ' events sent to Kafka at', datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S'))
@@ -79,7 +74,8 @@ class WeatherProducer:
     def run_forever(self):
         while True:
             print('Producing data...')
-            self.run()
+            for city in CITIES:
+                self.run(city)
             time.sleep(3600)
         
 obj = WeatherProducer()

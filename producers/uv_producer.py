@@ -3,12 +3,7 @@ import requests
 import datetime
 import json
 import time
-
-# TODO:
-# - pull a cada hora
-# - verificar se tá sendo deletado a cada hora
-# - pq partição sempre é zero
-# - fazer o de wave
+from cities import CITIES
 
 
 class UvProducer:
@@ -27,12 +22,12 @@ class UvProducer:
     def send_data(self, data, topic, key):
         self.producer.send(topic, data, key=key.encode('utf-8')).add_callback(self.on_send_success)
 
-    def request_data(self):
-        url = r"https://air-quality-api.open-meteo.com/v1/air-quality?latitude=-20.67&longitude=-40.50&hourly=uv_index&timezone=America%2FSao_Paulo"
+    def request_data(self, city):
+        url = fr"https://air-quality-api.open-meteo.com/v1/air-quality?{city}&hourly=uv_index&timezone=America%2FSao_Paulo"
         response = requests.get(url)
         return response.json()
 
-    def filter_data(self, data):
+    def filter_data(self, data, city):
         all_time = data["hourly"]['time']
         all_uv_index = data["hourly"]['uv_index']
 
@@ -50,19 +45,19 @@ class UvProducer:
                 continue
             
             events_uv.append({
-                'local': 'Guarapari',
+                'local': city,
                 'hora': time_,
                 'uv_index': uv_index,
             })
 
         return events_uv
 
-    def run(self):
-        data = self.request_data()
-        events_uv = self.filter_data(data)
+    def run(self, city):
+        data = self.request_data(CITIES[city])
+        events_uv = self.filter_data(data, city)
 
         for e_wave in events_uv:
-            self.send_data(str(e_wave), self.wave_topic, e_wave['hora'])
+            self.send_data(str(e_wave), self.wave_topic, city)
 
         self.producer.flush()
         print(len(events_uv), ' events sent to Kafka at', datetime.datetime.now().strftime('%d/%m/%Y %H:%M:%S'))
@@ -70,7 +65,8 @@ class UvProducer:
     def run_forever(self):
         while True:
             print('Producing data...')
-            self.run()
+            for city in CITIES:
+                self.run(city)
             time.sleep(3600)
         
 obj = UvProducer()
