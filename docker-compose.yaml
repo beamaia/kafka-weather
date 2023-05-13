@@ -26,7 +26,7 @@ services:
         build: 
             context: .
         container_name: topics
-        command: sh -c './create_topics.sh'
+        command: sh -c 'sleep 10s && sh ./create_topics.sh'
         depends_on:
             - zookeeper
             - kafka
