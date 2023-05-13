@@ -1,13 +1,24 @@
 from kafka import KafkaConsumer
 import json
 import datetime
+import difflib
+
+CITIES = json.loads(open('assets/cities.json', 'r').read())
 
 class BeachDayClient:
     beach_day_topic = 'beachDay'
 
-    def __init__(self):
+    def __init__(self, city):
         self.consumer = KafkaConsumer(bootstrap_servers='kafka:9092', auto_offset_reset='earliest', value_deserializer=lambda x: json.loads(x))
         self.consumer.subscribe(self.beach_day_topic)
+        self._verify_city(city)
+    
+    def _verify_city(self, city):
+        if not any(difflib.get_close_matches(city, CITIES, n=1, cutoff=0.8)):
+            raise Exception(f"City {city} not found")
+        else:
+            self.city = difflib.get_close_matches(city, CITIES, n=1, cutoff=0.8)[0]
+            print(f"City {city} found. Using {self.city} instead")
 
     def __get_partition_messages(self, partitions):
         messages = []
@@ -21,7 +32,6 @@ class BeachDayClient:
 
         return messages
     
-
     def get_messages(self):
         messages = []
 
