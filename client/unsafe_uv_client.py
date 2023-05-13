@@ -10,11 +10,12 @@ CITIES = json.loads(open('assets/cities.json', 'r').read())
 class UnsafeUvClient:
     uv_topic = 'uvIndex'
 
-    def __init__(self, city):
+    def __init__(self, city, date=None):
         self.consumer = KafkaConsumer(bootstrap_servers='kafka:9092', auto_offset_reset='earliest', value_deserializer=lambda x: json.loads(x))
         self.consumer.subscribe(self.uv_topic)
         
         self._verify_city(city)
+        self.date = date
 
     def _verify_city(self, city):
         if not any(difflib.get_close_matches(city, CITIES, n=1, cutoff=0.8)):
@@ -36,8 +37,9 @@ class UnsafeUvClient:
                 messages.append(msg_json)
         return messages
     
-    def filter_data(self, data):
-        now = datetime.datetime.now()
+    def filter_data(self, data, time=datetime.datetime.now()):
+        now = time
+        print(time)
         sorted_data = sorted(data, key=lambda x: x['hora'])
         
         if now.minute >= 30:
@@ -47,6 +49,8 @@ class UnsafeUvClient:
             time_ = message['hora']
             if time_.day == now.day and time_.month == now.month and time_.year == now.year and time_.hour == now.hour:
                 return message
+        
+        return {}
             
     
     def get_messages(self):
@@ -62,6 +66,7 @@ class UnsafeUvClient:
             messages.extend(self.__get_partition_messages(partitions))
         
         print("Polling finished. Sending data...")
+        messages = [dict(tupleized) for tupleized in set(tuple(item.items()) for item in messages)]
 
         return messages
     
@@ -76,10 +81,18 @@ class UnsafeUvClient:
             return 'Muito alto'
         else:
             return 'Extremo'
-        
-    def run(self):
+    
+    def get_events(self):
         messages = self.get_messages()
-        message = self.filter_data(messages)
+        return self.filter_data(messages)
+    
+    def get_events_by_date(self):
+        messages = self.get_messages()
+        print(messages)
+        return self.filter_data(messages, self.date)
+
+    def run(self):
+        message = self.get_events()
 
         if message:
             now = datetime.datetime.now()
