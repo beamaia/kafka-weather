@@ -120,7 +120,8 @@ class BeachHourProducer:
             print('Producing data...')
             self.run()
             time.sleep(3600)
-        
-obj = BeachHourProducer()
-obj.run_forever()
+
+if __name__ == '__main__': 
+    obj = BeachHourProducer()
+    obj.run_forever()
 
