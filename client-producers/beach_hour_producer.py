@@ -3,6 +3,8 @@ import json
 import time
 import datetime
 
+CITIES = json.loads(open('assets/cities.json', 'r').read())
+
 class BeachHourProducer:
     temp_topic = 'temperature'
     prec_topic = 'precipitationProbability'
@@ -26,23 +28,28 @@ class BeachHourProducer:
         print('\tPartition: ', record.partition)
         print('\tOffset: ', record.offset)
 
-    def send_data(self, data, topic, key):
-        self.producer.send(topic, data, key=key.encode('utf-8')).add_callback(self.on_send_success)
+    def send_data(self, data, topic, key, callback=False):
+        if callback:
+            self.producer.send(topic, data, key=key.encode('utf-8')).add_callback(self.on_send_success)
+        else:
+            self.producer.send(topic, data, key=key.encode('utf-8'))
 
     def transform_data(self, temp_messages, prec_messages, uv_messages):
-        hours = sorted(set([x for x in temp_messages.keys()] + [x for x in prec_messages.keys()] + [x for x in uv_messages.keys()]))
+        # intersection of hourr between sets of messages
+        set_hours = set([x for x in temp_messages.keys()]).intersection(set([x for x in prec_messages.keys()]),  set([x for x in uv_messages.keys()]))
+        hours = sorted(set_hours)
         transformed_data = []   
-
+        
         for hour in hours:
             aux = {
                 'hora': hour,
-                'local': 'Guarapari',
+                'local': temp_messages[hour]['local'],
                 'boa_hora': 0,
-                'temperatura': None if not hour in temp_messages.keys() else temp_messages[hour]['temperatura'],
-                'pp': None if not hour in prec_messages.keys() else prec_messages[hour]['pp'],
-                'uv_index': None if not hour in uv_messages.keys() else uv_messages[hour]['uv_index'] 
+                'temperatura': temp_messages[hour]['temperatura'],
+                'pp': prec_messages[hour]['pp'],
+                'uv_index': uv_messages[hour]['uv_index'] 
             }
-
+            
             transformed_data.append(aux)
 
         return transformed_data
@@ -73,8 +80,16 @@ class BeachHourProducer:
         for _, message_list in partitions.items():
             for message in message_list:   
                 msg_json = json.loads(message.value.replace("'", '"'))
+
+                # get city from obj
+                city = msg_json['local']
+
+                if not city in messages.keys():
+                    messages[city] = dict()
+
                 msg_json['hora'] = datetime.datetime.strptime(msg_json['hora'], '%Y-%m-%dT%H:%M')
-                messages[msg_json['hora']] = msg_json
+                messages[city][msg_json['hora']] = msg_json
+        
         return messages
     
     def get_messages(self):
@@ -105,15 +120,17 @@ class BeachHourProducer:
     
     def run(self):
         temp_messages, prec_messages, uv_message = self.get_messages()
-        transformed_data = self.transform_data(temp_messages, prec_messages, uv_message)
-        filtered_data = self.filter_data(transformed_data)
+        transformed_data_by_city = [self.transform_data(temp_messages[city], prec_messages[city], uv_message[city]) for city in CITIES]
+        filtered_data = [self.filter_data(transformed_data) for transformed_data in transformed_data_by_city]
         
         print("Sending data...")
-        for data in filtered_data:
-            self.send_data(data, self.beach_topic, data['hora'])
+        for city_data in filtered_data:
+            for data in city_data:
+                self.send_data(data, self.beach_topic, data['local'])
 
-        self.producer.flush()
-        print(len(filtered_data), ' events sent to Kafka at', datetime.datetime.now().strftime('%d/%m/%Y %H:%M:%S'))
+            self.producer.flush()
+            if len(city_data):
+                print(len(city_data), ' events sent to Kafka at', datetime.datetime.now().strftime('%d/%m/%Y %H:%M:%S'), "for city", data['local'])
     
     
     def run_forever(self):
@@ -121,7 +138,8 @@ class BeachHourProducer:
             print('Producing data...')
             self.run()
             time.sleep(3600)
-        
-obj = BeachHourProducer()
-obj.run_forever()
+
+if __name__ == '__main__':  
+    obj = BeachHourProducer()
+    obj.run_forever()
 

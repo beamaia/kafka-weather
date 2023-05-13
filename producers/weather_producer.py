@@ -3,8 +3,8 @@ import requests
 import datetime
 import json
 import time
-from cities import CITIES
 
+CITIES = json.loads(open('assets/cities.json', 'r').read())
 
 class WeatherProducer:
     temp_topic = 'temperature'
@@ -19,9 +19,12 @@ class WeatherProducer:
         print('\tPartition: ', record.partition)
         print('\tOffset: ', record.offset)
 
-    # voltar aqui pra ver se ta certo
-    def send_data(self, data, topic, key):
-        self.producer.send(topic, data, key=key.encode('utf-8')).add_callback(self.on_send_success)
+
+    def send_data(self, data, topic, key, with_callback=False):
+        if with_callback:
+            self.producer.send(topic, data, key=key.encode('utf-8')).add_callback(self.on_send_success)
+        else:
+            self.producer.send(topic, data, key=key.encode('utf-8'))
 
     def request_data(self, city):
         url = fr"https://api.open-meteo.com/v1/forecast?{city}&hourly=temperature_2m,precipitation_probability&forecast_days=3&timezone=America%2FSao_Paulo"
@@ -69,7 +72,7 @@ class WeatherProducer:
             self.send_data(str(e_prec), self.prec_topic, city)
 
         self.producer.flush()
-        print(len(events_temp), ' events sent to Kafka at', datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S'))
+        print(len(events_temp), ' events sent to Kafka at', datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S'), "for city", city)
     
     def run_forever(self):
         while True:
@@ -77,6 +80,7 @@ class WeatherProducer:
             for city in CITIES:
                 self.run(city)
             time.sleep(3600)
-        
-obj = WeatherProducer()
-obj.run_forever()
+
+if __name__ == '__main__':
+    obj = WeatherProducer()
+    obj.run_forever()

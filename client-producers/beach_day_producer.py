@@ -3,6 +3,8 @@ import json
 import time
 import datetime
 
+CITIES = json.loads(open('assets/cities.json', 'r').read())
+
 class BeachHourProducer:
     beach_hour_topic = 'beachHour'
     beach_day_topic = 'beachDay'
@@ -12,15 +14,18 @@ class BeachHourProducer:
         self.producer = KafkaProducer(bootstrap_servers="kafka:9092", value_serializer=lambda v: json.dumps(v).encode('utf-8'))
         self.consumer.subscribe(self.beach_hour_topic)
     
-
+    
     def on_send_success(self, record):
         print('NEW DATA:')
         print('\tTopic: ', record.topic)
         print('\tPartition: ', record.partition)
         print('\tOffset: ', record.offset)
 
-    def send_data(self, data, topic, key):
-        self.producer.send(topic, data, key=key.encode('utf-8')).add_callback(self.on_send_success)
+    def send_data(self, data, topic, key, callback=False):
+        if callback:
+            self.producer.send(topic, data, key=key.encode('utf-8')).add_callback(self.on_send_success)
+        else:
+            self.producer.send(topic, data, key=key.encode('utf-8'))
 
 
     def transform_data(self, data):
@@ -42,10 +47,13 @@ class BeachHourProducer:
                 else:
                     break
             
-            intervals.append({
+            event = {
+                'local': start['local'],
                 'inicio': start_time.strftime('%Y-%m-%dT%H:%M'),
                 'fim': end_time.replace(minute=59).strftime('%Y-%m-%dT%H:%M'),
-            })
+            }
+
+            intervals.append(event)
 
             if not len(data):
                 break
@@ -66,8 +74,15 @@ class BeachHourProducer:
         for _, message_list in partitions.items():
             for message in message_list:   
                 msg_json = message.value
+
+                # get city from obj
+                city = msg_json['local']
+
+                if not city in messages.keys():
+                    messages[city] = dict()
+
                 msg_json['hora'] = datetime.datetime.strptime(msg_json['hora'], '%Y-%m-%dT%H:%M')
-                messages[msg_json['hora']] = msg_json
+                messages[city][msg_json['hora']] = msg_json
         return messages
     
     def get_messages(self):
@@ -88,21 +103,23 @@ class BeachHourProducer:
     
     def run(self):
         messages = self.get_messages()
-        filtered_data = self.filter_data(messages)
-        transformed_data = self.transform_data(filtered_data)
+        filtered_data_by_city = [self.filter_data(messages[city]) for city in CITIES]
+        transformed_data = [self.transform_data(filtered_data) for filtered_data in filtered_data_by_city]
 
         print("Sending data...")
-        for data in transformed_data:
-            self.send_data(data, self.beach_day_topic, data['inicio'])
+        for city_data in transformed_data:
+            for data in city_data:
+                self.send_data(data, self.beach_day_topic, data['local'])
 
-        self.producer.flush()
-        print(len(transformed_data), ' events sent to Kafka at', datetime.datetime.now().strftime('%d/%m/%Y %H:%M:%S'))
+            self.producer.flush()
+            if len(city_data):
+                print(len(city_data), ' events sent to Kafka at', datetime.datetime.now().strftime('%d/%m/%Y %H:%M:%S'), "for city", data['local'])
     
     def run_forever(self):
         while True:
             print('Producing data...')
             self.run()
-            time.sleep(300)
+            time.sleep(3600)
         
 obj = BeachHourProducer()
 obj.run_forever()

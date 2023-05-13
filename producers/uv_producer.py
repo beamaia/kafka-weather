@@ -3,8 +3,8 @@ import requests
 import datetime
 import json
 import time
-from cities import CITIES
 
+CITIES = json.loads(open('assets/cities.json', 'r').read())
 
 class UvProducer:
     wave_topic = 'uvIndex'
@@ -18,9 +18,11 @@ class UvProducer:
         print('\tPartition: ', record.partition)
         print('\tOffset: ', record.offset)
 
-    # voltar aqui pra ver se ta certo
-    def send_data(self, data, topic, key):
-        self.producer.send(topic, data, key=key.encode('utf-8')).add_callback(self.on_send_success)
+    def send_data(self, data, topic, key, with_callback=False):
+        if with_callback:
+            self.producer.send(topic, data, key=key.encode('utf-8')).add_callback(self.on_send_success)
+        else:
+            self.producer.send(topic, data, key=key.encode('utf-8'))
 
     def request_data(self, city):
         url = fr"https://air-quality-api.open-meteo.com/v1/air-quality?{city}&hourly=uv_index&timezone=America%2FSao_Paulo"
@@ -60,7 +62,7 @@ class UvProducer:
             self.send_data(str(e_wave), self.wave_topic, city)
 
         self.producer.flush()
-        print(len(events_uv), ' events sent to Kafka at', datetime.datetime.now().strftime('%d/%m/%Y %H:%M:%S'))
+        print(len(events_uv), ' events sent to Kafka at', datetime.datetime.now().strftime('%d/%m/%Y %H:%M:%S'), "for city", city)
     
     def run_forever(self):
         while True:
@@ -68,6 +70,7 @@ class UvProducer:
             for city in CITIES:
                 self.run(city)
             time.sleep(3600)
-        
-obj = UvProducer()
-obj.run_forever()
+
+if __name__ == "__main__": 
+    obj = UvProducer()
+    obj.run_forever()
