@@ -2,6 +2,7 @@ from kafka import KafkaConsumer
 import json
 import datetime
 import difflib
+import argparse
 
 CITIES = json.loads(open('assets/cities.json', 'r').read())
 
@@ -25,6 +26,9 @@ class BeachDayClient:
         for _, message_list in partitions.items():
             for message in message_list:   
                 msg_json = message.value
+                if msg_json['local'] != self.city:
+                    continue
+
                 msg_json['inicio'] = datetime.datetime.strptime(msg_json['inicio'], '%Y-%m-%dT%H:%M')
                 msg_json['fim'] = datetime.datetime.strptime(msg_json['fim'], '%Y-%m-%dT%H:%M')
 
@@ -45,13 +49,16 @@ class BeachDayClient:
             messages.extend(self.__get_partition_messages(partitions))
         
         print("Polling finished. Sending data...")
-
+        messages = [dict(tupleized) for tupleized in set(tuple(item.items()) for item in messages)]
         return messages
     
+    def get_events(self):
+        messages = self.get_messages()
+        return sorted(messages, key=lambda x: x['inicio'])
+                          
     def run(self):
         print("Verificando horarios bons para ir a praia...")
-        messages = self.get_messages()
-        messages = sorted(messages, key=lambda x: x['inicio'])
+        messages = self.get_events()
 
         for message in messages:
             start = message['inicio']
@@ -59,6 +66,12 @@ class BeachDayClient:
 
             print(f"Dia {start.day:02}/{start.month:02} - Horario bom para ir a praia: {start.hour:02}:{start.minute:02} - {end.hour:02}:{end.minute:02} ")
 
+def parse_args():
+    parser = argparse.ArgumentParser(description='Beach Day Client')
+    parser.add_argument('--city', type=str, help='City to check beach day', required=True)
+    return parser.parse_args()
+
 if __name__ == '__main__':
-    client = BeachDayClient()
+    args = parse_args()
+    client = BeachDayClient(args.city)
     client.run()
