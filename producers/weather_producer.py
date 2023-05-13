@@ -73,6 +73,7 @@ class WeatherProducer:
 
         self.producer.flush()
         print(len(events_temp), ' events sent to Kafka at', datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S'), "for city", city)
+        return events_temp, events_prec
     
     def run_forever(self):
         while True:

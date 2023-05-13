@@ -63,6 +63,7 @@ class UvProducer:
 
         self.producer.flush()
         print(len(events_uv), ' events sent to Kafka at', datetime.datetime.now().strftime('%d/%m/%Y %H:%M:%S'), "for city", city)
+        return events_uv
     
     def run_forever(self):
         while True:
