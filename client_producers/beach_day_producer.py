@@ -5,7 +5,7 @@ import datetime
 
 CITIES = json.loads(open('assets/cities.json', 'r').read())
 
-class BeachHourProducer:
+class BeachDayProducer:
     beach_hour_topic = 'beachHour'
     beach_day_topic = 'beachDay'
 
@@ -114,6 +114,8 @@ class BeachHourProducer:
             self.producer.flush()
             if len(city_data):
                 print(len(city_data), ' events sent to Kafka at', datetime.datetime.now().strftime('%d/%m/%Y %H:%M:%S'), "for city", data['local'])
+
+        return transformed_data
     
     def run_forever(self):
         while True:
@@ -122,6 +124,6 @@ class BeachHourProducer:
             time.sleep(3600)
 
 if __name__ == '__main__': 
-    obj = BeachHourProducer()
+    obj = BeachDayProducer()
     obj.run_forever()
 

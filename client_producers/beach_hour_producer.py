@@ -117,10 +117,10 @@ class BeachHourProducer:
         print("UV messages: ", len(uv_message))
 
         return temp_messages, prec_messages, uv_message
-    
-    def run(self):
+
+    def run(self, cities=CITIES):
         temp_messages, prec_messages, uv_message = self.get_messages()
-        transformed_data_by_city = [self.transform_data(temp_messages[city], prec_messages[city], uv_message[city]) for city in CITIES]
+        transformed_data_by_city = [self.transform_data(temp_messages[city], prec_messages[city], uv_message[city]) for city in cities]
         filtered_data = [self.filter_data(transformed_data) for transformed_data in transformed_data_by_city]
         
         print("Sending data...")
@@ -131,7 +131,8 @@ class BeachHourProducer:
             self.producer.flush()
             if len(city_data):
                 print(len(city_data), ' events sent to Kafka at', datetime.datetime.now().strftime('%d/%m/%Y %H:%M:%S'), "for city", data['local'])
-    
+
+        return filtered_data
     
     def run_forever(self):
         while True:
