@@ -42,4 +42,4 @@ RUN pip3 install -r requirements.txt
 
 
 # Expose Kafka ports
-EXPOSE 9092 2181
+EXPOSE 9092 2181 8000
