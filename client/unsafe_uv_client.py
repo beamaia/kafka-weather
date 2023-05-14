@@ -5,19 +5,49 @@ import datetime
 import argparse
 import difflib
 
+from decouple import config
+
 CITIES = json.loads(open('assets/cities.json', 'r').read())
 
 class UnsafeUvClient:
+    """
+    This class is responsible for consuming UV data from Kafka.
+    It consumes data from the topic 'uvIndex' and prints the UV index for the given city.
+    """
     uv_topic = 'uvIndex'
 
     def __init__(self, city, date=None):
-        self.consumer = KafkaConsumer(bootstrap_servers='kafka:9092', auto_offset_reset='earliest', value_deserializer=lambda x: json.loads(x))
+        server = config('KAFKA_SERVER')
+
+        # Creates kafka consumer and subscribes to the uvIndex topic
+        self.consumer = KafkaConsumer(bootstrap_servers=f'{server}:9092', auto_offset_reset='earliest', value_deserializer=lambda x: json.loads(x))
         self.consumer.subscribe(self.uv_topic)
         
-        self._verify_city(city)
+        # Verifies if the given city is valid
+        self.__verify_city(city)
+
+        # Sets the date attribute to the given date
         self.date = date
 
-    def _verify_city(self, city):
+    def __verify_city(self, city):
+        """
+        Verifies if the given city is valid. If it is, sets the city attribute to the given city.
+        To be valid, the given city must be in the cities.json file.
+
+        Parameters
+        ----------
+        city : str
+            City to be verified.
+
+        Raises
+        ------
+        Exception
+            If the given city is not valid.
+
+        Returns
+        -------
+        None.
+        """
         if not any(difflib.get_close_matches(city, CITIES, n=1, cutoff=0.8)):
             raise Exception(f"City {city} not found")
         else:
@@ -39,7 +69,6 @@ class UnsafeUvClient:
     
     def filter_data(self, data, time=datetime.datetime.now()):
         now = time
-        print(time)
         sorted_data = sorted(data, key=lambda x: x['hora'])
         
         if now.minute >= 30:
@@ -51,8 +80,7 @@ class UnsafeUvClient:
                 return message
         
         return {}
-            
-    
+              
     def get_messages(self):
         messages = []
 
@@ -70,6 +98,14 @@ class UnsafeUvClient:
 
         return messages
     
+    def get_events(self):
+        messages = self.get_messages()
+        return self.filter_data(messages)
+    
+    def get_events_by_date(self):
+        messages = self.get_messages()
+        return self.filter_data(messages, self.date)
+
     def uv_index_to_risk(self, uv_index):
         if uv_index <= 2:
             return 'Baixo'
@@ -81,16 +117,7 @@ class UnsafeUvClient:
             return 'Muito alto'
         else:
             return 'Extremo'
-    
-    def get_events(self):
-        messages = self.get_messages()
-        return self.filter_data(messages)
-    
-    def get_events_by_date(self):
-        messages = self.get_messages()
-        print(messages)
-        return self.filter_data(messages, self.date)
-
+            
     def run(self):
         message = self.get_events()
 
