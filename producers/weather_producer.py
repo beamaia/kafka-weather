@@ -83,7 +83,7 @@ class WeatherProducer:
         -------
         json object
         """	
-        url = fr"https://api.open-meteo.com/v1/forecast?{city}&hourly=temperature_2m,precipitation_probability&forecast_days=3&timezone=America%2FSao_Paulo"
+        url = fr"https://api.open-meteo.com/v1/forecast?{city}&hourly=temperature_2m,precipitation_probability&forecast_days=3&forecast_days=7&timezone=America%2FSao_Paulo"
         response = requests.get(url)
         return response.json()
 
@@ -137,7 +137,7 @@ class WeatherProducer:
         for time_, temp, prec in zip(all_time, all_temp, all_prec):
             time_formatted = datetime.datetime.strptime(time_, format)
 
-            if time_formatted < now or time_formatted > now + datetime.timedelta(days=2):
+            if time_formatted < now:
                 continue
             
             events_temp.append({
@@ -174,8 +174,8 @@ class WeatherProducer:
         events_temp, events_prec = self.filter_data(data, city)
 
         for e_temp, e_prec in zip(events_temp, events_prec):
-            self.send_data(str(e_temp), self.temp_topic, city)
-            self.send_data(str(e_prec), self.prec_topic, city)
+            self.send_data(e_temp, self.temp_topic, city)
+            self.send_data(e_prec, self.prec_topic, city)
 
         self.producer.flush()
         print(len(events_temp), ' events sent to Kafka at', datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S'), "for city", city)

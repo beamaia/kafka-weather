@@ -80,7 +80,7 @@ class UvProducer:
         json object
             json object containing the uv index and time of the data for the next 3 days, hourly format.
         """
-        url = fr"https://air-quality-api.open-meteo.com/v1/air-quality?{city}&hourly=uv_index&timezone=America%2FSao_Paulo"
+        url = fr"https://air-quality-api.open-meteo.com/v1/air-quality?{city}&hourly=uv_index&forecast_days=7&timezone=America%2FSao_Paulo"
         response = requests.get(url)
         return response.json()
 
@@ -120,7 +120,7 @@ class UvProducer:
             time_formatted = datetime.datetime.strptime(time_, format)
 
             # if time is less then today date, or if time is more than 3 days from today
-            if time_formatted < now or time_formatted > now + datetime.timedelta(days=2):
+            if time_formatted < now:
                 continue
             
             events_uv.append({
@@ -150,7 +150,7 @@ class UvProducer:
         events_uv = self.filter_data(data, city)
 
         for e_uv_index in events_uv:
-            self.send_data(str(e_uv_index), self.uv_index_topic, city)
+            self.send_data(e_uv_index, self.uv_index_topic, city)
 
         self.producer.flush()
         print(len(events_uv), ' events sent to Kafka at', datetime.datetime.now().strftime('%d/%m/%Y %H:%M:%S'), "for city", city)
