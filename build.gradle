@@ -42,8 +42,8 @@ dependencies {
 logging.captureStandardOutput LogLevel.ERROR
 
 
-task runClass1(type: JavaExec) {
-    main = 'kafkaWeather.MainClass' // Replace with the fully qualified name of your class
+task runBeachHour(type: JavaExec) {
+    main = 'kafkaWeather.BeachHour' // Replace with the fully qualified name of your class
     classpath = sourceSets.main.runtimeClasspath
 }
 
