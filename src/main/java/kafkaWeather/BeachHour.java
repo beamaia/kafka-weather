@@ -47,69 +47,32 @@ class BeachHour{
 
 
         // Configuring consumer
-		// final Consumed<String, JsonNode> consumed = Consumed.with(stringSerde, jsonSerde);
+		final Consumed<String, JsonNode> consumed = Consumed.with(stringSerde, jsonSerde);
 
-		// final StreamsBuilder builder = new StreamsBuilder();
-        // final KStream<String, JsonNode> uv = builder.stream("uvIndex", consumed);
-        // final KStream<String, JsonNode> temperature = builder.stream("temperature", consumed);
-        // final KStream<String, JsonNode> precipitationProbability = builder.stream("precipitationProbability", consumed);
+		final StreamsBuilder builder = new StreamsBuilder();
+        final KStream<String, JsonNode> uv = builder.stream("uvIndex", consumed);
+        final KStream<String, JsonNode> temperature = builder.stream("temperature", consumed);
+        final KStream<String, JsonNode> precipitationProbability = builder.stream("precipitationProbability", consumed);
 
-        // KTable<String, JsonNode> tempTable = temperature
-        //         .selectKey((key, value) -> value.get("local").asText() + value.get("hora").asText())
-        //         .groupByKey()
-        //         .reduce((aggValue, newValue) -> newValue);
-
-        // KTable<String, JsonNode> precTable = precipitationProbability
-        //         .selectKey((key, value) -> value.get("local").asText() + value.get("hora").asText())
-        //         .groupByKey()
-        //         .reduce((aggValue, newValue) -> newValue);
-
-        // KTable<String, JsonNode> uvTable = uv
-        //         .selectKey((key, value) -> value.get("local").asText() + value.get("hora").asText())
-        //         .groupByKey()
-        //         .reduce((aggValue, newValue) -> newValue);
-
-        // KStream<String, JsonNode> tempStream = tempTable.toStream();
-        // KStream<String, JsonNode> precStream = precTable.toStream();
-        // KStream<String, JsonNode> uvStream = uvTable.toStream();
-
-        // KStream<String, JsonNode> joinStream = tempStream
-        //         .join(precStream, (tempValue, precValue) -> {
-        //             ObjectNode resultNode = JsonNodeFactory.instance.objectNode();
-        //             resultNode.put("local", tempValue.get("local"));
-        //             resultNode.put("temperatura", tempValue.get("temperatura"));
-        //             resultNode.put("pp", precValue.get("pp"));
-        //             return resultNode;
-        //         }, JoinWindows.of(Duration.ofMinutes(5)));
-        //         // .join(uvStream, (joinPrecTempValue, uvValue) -> {
-        //         //     ObjectNode resultNode = JsonNodeFactory.instance.objectNode();
-        //         //     resultNode.put("local", joinPrecTempValue.get("local"));
-        //         //     resultNode.put("temperatura", joinPrecTempValue.get("temperatura"));
-        //         //     resultNode.put("pp", joinPrecTempValue.get("pp"));
-        //         //     resultNode.put("uv", uvValue.get("uv"));
-        //         //     return resultNode;
-        //         // }, JoinWindows.of(Duration.ofMinutes(5)));
-                
-        //         joinStream.foreach((key, value) -> System.out.println("Event: " + value + " Key: " + key)); 
 
         // Joining streams
-        Perform necessary transformations on temperature
+        // Perform necessary transformations on temperature
         KTable<String, JsonNode> tempTable = temperature
-                .selectKey((key, value) -> value.get("local").asText() + value.get("hora").asText())
-                .groupByKey()
-                .reduce((aggValue, newValue) -> newValue);
+        .selectKey((key, value) -> value.get("local").asText() + value.get("hora").asText())
+        .groupByKey()
+        .reduce((aggValue, newValue) -> newValue);
 
         // Perform necessary transformations on precipitationProbability
         KTable<String, JsonNode> precTable = precipitationProbability
-                .selectKey((key, value) -> value.get("local").asText() + value.get("hora").asText())
-                .groupByKey()
-                .reduce((aggValue, newValue) -> newValue);
+        .selectKey((key, value) -> value.get("local").asText() + value.get("hora").asText())
+        .groupByKey()
+        .reduce((aggValue, newValue) -> newValue);
 
         // Perform necessary transformations on uvIndex
         KTable<String, JsonNode> uvTable = uv
-                .selectKey((key, value) -> value.get("local").asText() + value.get("hora").asText())
-                .groupByKey()
-                .reduce((aggValue, newValue) -> newValue);
+        .selectKey((key, value) -> value.get("local").asText() + value.get("hora").asText())
+        .groupByKey()
+        .reduce((aggValue, newValue) -> newValue);
 
         // Join the sunriseTable and sunsetTable based on 'local' key
         KTable<String, JsonNode> joinTable = tempTable
@@ -124,7 +87,7 @@ class BeachHour{
             resultNode.put("local", joinPrecTempValue.get("local"));
             resultNode.put("temperatura", joinPrecTempValue.get("temperatura"));
             resultNode.put("pp", joinPrecTempValue.get("pp"));
-            resultNode.put("uv", uvValue.get("uv"));
+            resultNode.put("uv", uvValue.get("uv_index"));
             return resultNode;
         });
 
