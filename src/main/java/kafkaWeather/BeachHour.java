@@ -18,13 +18,13 @@ import org.apache.kafka.streams.kstream.JoinWindows;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.kafka.connect.json.JsonDeserializer;
 import org.apache.kafka.connect.json.JsonSerializer;
 
 import org.apache.kafka.streams.*;
 import org.apache.kafka.streams.kstream.*;
-
 
 import java.util.Properties;
 import java.time.Duration;
@@ -90,22 +90,34 @@ class BeachHour{
             resultNode.put("uv", uvValue.get("uv_index"));
             return resultNode;
         });
-
+        
+        // Filter null values
+        KTable<String, JsonNode> filteredTable = joinTable.filter((key, value) -> {
+            if (value == null) {
+                return false; // Exclude null values
+            }
+            
+            // Check if any field within the JSON object is null
+            if (value.get("local") == NullNode.getInstance() || 
+                value.get("temperatura") == NullNode.getInstance() || 
+                value.get("pp") == NullNode.getInstance() || 
+                value.get("uv") == NullNode.getInstance()) {
+                return false; // Exclude if any field is null
+            }
+            
+            return true; // Include if all fields are non-null
+        });
+        
         // Convert the joinedTable to a stream
-        KStream<String, JsonNode> joinedStream = joinTable.toStream();
+        KStream<String, JsonNode> joinedStream = filteredTable.toStream();
 
         // Print the final events to the console
         joinedStream.foreach((key, value) -> System.out.println("Event: " + value + " Key: " + key));
         
         // Write the final events back to Kafka
-        joinedStream.to("sunHour", Produced.with(stringSerde, jsonSerde));
+        joinedStream.to("beachDay", Produced.with(stringSerde, jsonSerde));
 
 		KafkaStreams streams = new KafkaStreams(builder.build(), props);
 		streams.start();
-
-		
-		System.out.println("Stream criado");
-
-		// streams.close();
 	}
 }  
