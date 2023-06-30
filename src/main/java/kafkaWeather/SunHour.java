@@ -81,10 +81,5 @@ class SunHour{
 
 		KafkaStreams streams = new KafkaStreams(builder.build(), props);
 		streams.start();
-
-		
-		System.out.println("Stream criado");
-
-		// streams.close();
 	}
 }  
