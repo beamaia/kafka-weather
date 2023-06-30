@@ -52,6 +52,11 @@ task runSunHour(type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
 }
 
+task runBeachDay(type: JavaExec) {
+    main = 'kafkaWeather.BeachDay' // Replace with the fully qualified name of your class
+    classpath = sourceSets.main.runtimeClasspath
+}
+
 
 application {
     mainClassName = javaMainClass
