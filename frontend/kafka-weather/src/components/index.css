@@ -1,0 +1,16 @@
+html,
+body {
+  font-family: 'Calibri', sans-serif;
+}
+
+.fc-theme-standard {
+  text-transform: capitalize;
+}
+
+.fc .fc-timegrid-slot {
+  height: 50px;
+}
+
+.fc .fc-timegrid-slot-label {
+  vertical-align: top;
+}
