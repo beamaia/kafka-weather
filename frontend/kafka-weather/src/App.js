@@ -22,7 +22,7 @@ function App() {
         temperatura: 20,  
         pp: 0.8,
         uv: 1,
-        boa_hora: 0,
+        boaHora: 0,
         local: 'Ubatuba',
         isDay: 0,
       },
@@ -31,7 +31,7 @@ function App() {
         temperatura: 20,
         pp: 0.8,
         uv: 1,
-        boa_hora: 0,
+        boaHora: 0,
         local: 'Ubatuba',
         isDay: 0,
       },
@@ -40,7 +40,7 @@ function App() {
         temperatura: 20,
         pp: 0.8,
         uv: 1,
-        boa_hora: 1,
+        boaHora: 1,
         local: 'Ubatuba',
         isDay: 1,
       },
@@ -49,7 +49,7 @@ function App() {
         temperatura: 20,
         pp: 0.8,
         uv: 1,
-        boa_hora: 1,
+        boaHora: 1,
         local: 'Ubatuba',
         isDay: 0,
       },
@@ -58,7 +58,7 @@ function App() {
         temperatura: 20,
         pp: 0.8,
         uv: 1,
-        boa_hora: 1,
+        boaHora: 1,
         local: 'Ubatuba',
         isDay: 1,
       },
@@ -67,7 +67,7 @@ function App() {
         temperatura: 20,
         pp: 0.8,
         uv: 1,
-        boa_hora: 1,
+        boaHora: 1,
         local: 'Ubatuba',
         isDay: 0,
       }
@@ -76,9 +76,9 @@ function App() {
     setFullData(data)
 
     if(!byPeriod) {
-      setBeachData(data.filter((item) => item.boa_hora).map((item) => ({...item, inicio: item.hora, fim: DateTime.fromISO(item.hora).plus({hours: 1}).toISO()})))
+      setBeachData(data.filter((item) => item.boaHora).map((item) => ({...item, inicio: item.hora, fim: DateTime.fromISO(item.hora).plus({hours: 1}).toISO()})))
     } else {
-      setBeachData(data.filter((item) => item.boa_hora))
+      setBeachData(data.filter((item) => item.boaHora))
     }
   }, [byPeriod, city])
 
