@@ -1,14 +1,14 @@
 import { Checkbox, FormControl, FormControlLabel, Grid, InputLabel, MenuItem, Select } from "@mui/material";
-import React, {useState} from "react";
+import React from "react";
 import { YellowSwitch, useStyles } from "./style";
 import { citiesEnum } from "../assets/cities";
 
-export default function TopBar() {
-    const [checkedIsDay, setCheckedIsDay] = useState(false);
-    const [cidade, setCidade] = useState('')
-    const classes = useStyles()
+export default function TopBar({isDayState, cityState, byPeriodState}) {
+    const [checkedIsDay, setCheckedIsDay] = isDayState;
+    const [city, setCity] = cityState;
+    const [byPeriod, setByPeriod] = byPeriodState;
+    const classes = useStyles();
     const keys = Object.keys(citiesEnum);
-
 
     return (
     <Grid container spacing={2} style={{display: 'flex', }}>
@@ -21,8 +21,8 @@ export default function TopBar() {
             <InputLabel id="select-cidade">Cidade</InputLabel>
             <Select
                 labelId="select-cidade"
-                value={cidade}
-                onChange={(e) => setCidade(e.target.value)}
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
                 label="Cidade"
                 // change select box color to yellow
                 sx={{
@@ -57,7 +57,7 @@ export default function TopBar() {
             />
         </Grid>
         <Grid item xs={3} style={{display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-            <FormControlLabel className={classes.text} control={<YellowSwitch defaultChecked />} label="Mostrar por período" />
+            <FormControlLabel className={classes.text} control={<YellowSwitch checked={byPeriod} onChange={() => setByPeriod((prev) => !prev)} />} label="Mostrar por período" />
         </Grid>
     </Grid>
     );

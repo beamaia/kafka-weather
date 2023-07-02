@@ -14,8 +14,8 @@ import { Grid } from "@mui/material";
 export default function Calendar({data}) {
     const [periods, setPeriods] = useState(undefined);
 
-    const startOfThisWeek = DateTime.local().startOf('week').toISO();
-    console.log(startOfThisWeek);
+    const startOfThisWeek = DateTime.now().toISO();
+
     const classes = useStyles();
 
     useEffect(() => {
