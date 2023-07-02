@@ -1,0 +1,88 @@
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class JsonNodeExample {
+    public static void main(String[] args) {
+        // Create an example list of JsonNode objects
+        List<JsonNode> jsonNodes = new ArrayList<>();
+        jsonNodes.add(createJsonNode("value1"));
+        jsonNodes.add(createJsonNode("value2"));
+        jsonNodes.add(createJsonNode("value3"));
+
+        // Create an empty JSON object using ObjectMapper
+        ObjectMapper mapper = new ObjectMapper();
+        ObjectNode result = mapper.createObjectNode();
+
+        // Convert the list of JsonNode objects to a string representation
+        String jsonNodesAsString = convertJsonNodeListToString(jsonNodes);
+
+        // Put the string representation into the "intervalos" field of the result object
+        result.put("intervalos", jsonNodesAsString);
+
+        // Print the result object
+        System.out.println(result.toString());
+    }
+
+    private static JsonNode createJsonNode(String value) {
+        ObjectMapper mapper = new ObjectMapper();
+        return mapper.createObjectNode().put("value", value);
+    }
+
+    private static String convertJsonNodeListToString(List<JsonNode> jsonNodes) {
+        ObjectMapper mapper = new ObjectMapper();
+        ArrayNode arrayNode = mapper.createArrayNode();
+        for (JsonNode jsonNode : jsonNodes) {
+            arrayNode.add(jsonNode);
+        }
+        return arrayNode.toString();
+    }
+}
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class StringToListExample {
+    public static void main(String[] args) {
+        // Example string representation of a list of JsonNode objects
+        String jsonString = "[{\"value\":\"value1\"},{\"value\":\"value2\"},{\"value\":\"value3\"}]";
+
+        // Convert the string to a list of JsonNode objects
+        List<JsonNode> jsonNodes = convertStringToList(jsonString);
+
+        // Print the list of JsonNode objects
+        for (JsonNode jsonNode : jsonNodes) {
+            System.out.println(jsonNode);
+        }
+    }
+
+    private static List<JsonNode> convertStringToList(String jsonString) {
+        List<JsonNode> jsonNodes = new ArrayList<>();
+
+        try {
+            // Create an ObjectMapper instance
+            ObjectMapper mapper = new ObjectMapper();
+
+            // Read the JSON string as an ArrayNode
+            ArrayNode arrayNode = mapper.readValue(jsonString, ArrayNode.class);
+
+            // Iterate over the elements in the ArrayNode and add them to the list
+            for (JsonNode jsonNode : arrayNode) {
+                jsonNodes.add(jsonNode);
+            }
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+
+        return jsonNodes;
+    }
+}
