@@ -23,15 +23,19 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.kafka.connect.json.JsonDeserializer;
 import org.apache.kafka.connect.json.JsonSerializer;
 
+import java.time.format.DateTimeFormatter;
+import java.time.LocalDateTime;
+
 import org.apache.kafka.streams.*;
 import org.apache.kafka.streams.kstream.*;
 
 import java.util.Properties;
+import java.util.function.Function;
 import java.time.Duration;
 
 
 class BeachHour{  
-	public static void main(String[] args){    
+	public static void main(String[] args){   
         // Configuring serializers
 		Serde<String> stringSerde = Serdes.String();
 		final Serializer<JsonNode> jsonSerializer = new JsonSerializer();
@@ -40,7 +44,7 @@ class BeachHour{
 		
         
         Properties props = new Properties();
-		props.put(StreamsConfig.APPLICATION_ID_CONFIG, "kafka-weather");
+		props.put(StreamsConfig.APPLICATION_ID_CONFIG, "kafka-weather-beach-hour");
 		props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "kafka:9092"); 
         props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass());
         props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass());
@@ -50,72 +54,76 @@ class BeachHour{
 		final Consumed<String, JsonNode> consumed = Consumed.with(stringSerde, jsonSerde);
 
 		final StreamsBuilder builder = new StreamsBuilder();
-        final KStream<String, JsonNode> uv = builder.stream("uvIndex", consumed);
-        final KStream<String, JsonNode> temperature = builder.stream("temperature", consumed);
-        final KStream<String, JsonNode> precipitationProbability = builder.stream("precipitationProbability", consumed);
 
+        
+        // Get stream from beachHour topic
+        KStream<String, JsonNode> beachHour = builder.stream("beachHourFiltered", consumed);
 
-        // Joining streams
-        // Perform necessary transformations on temperature
-        KTable<String, JsonNode> tempTable = temperature
+        // Transform into ktable
+        KTable<String, JsonNode> beachHourTable = beachHour
         .selectKey((key, value) -> value.get("local").asText() + value.get("hora").asText())
         .groupByKey()
         .reduce((aggValue, newValue) -> newValue);
 
-        // Perform necessary transformations on precipitationProbability
-        KTable<String, JsonNode> precTable = precipitationProbability
-        .selectKey((key, value) -> value.get("local").asText() + value.get("hora").asText())
+        // Extract local and day from filteredTable
+        Function<JsonNode, String> foreignKeyExtractor = (x) -> x.get("local").asText() + x.get("hora").asText().split("T")[0];
+
+        // Get sunhour
+        KTable<String, JsonNode> sunhour = builder.stream("sunHour", consumed)
+        .selectKey((key, value) -> value.get("local").asText() + value.get("sunrise").asText().split("T")[0])
         .groupByKey()
         .reduce((aggValue, newValue) -> newValue);
 
-        // Perform necessary transformations on uvIndex
-        KTable<String, JsonNode> uvTable = uv
-        .selectKey((key, value) -> value.get("local").asText() + value.get("hora").asText())
-        .groupByKey()
-        .reduce((aggValue, newValue) -> newValue);
-
-        // Join the sunriseTable and sunsetTable based on 'local' key
-        KTable<String, JsonNode> joinTable = tempTable
-        .join(precTable, (tempValue, precValue) -> {
+        // Join the filteredTable and sunhour based on 'local' key
+        KTable<String, JsonNode> joinedTable = beachHourTable.join(sunhour, foreignKeyExtractor, 
+        (filteredValue, sunhourValue) -> {
             ObjectNode resultNode = JsonNodeFactory.instance.objectNode();
-            resultNode.put("local", tempValue.get("local"));
-            resultNode.put("temperatura", tempValue.get("temperatura"));
-            resultNode.put("pp", precValue.get("pp"));
-            return resultNode;
-        }).join(uvTable, (joinPrecTempValue, uvValue) -> {
-            ObjectNode resultNode = JsonNodeFactory.instance.objectNode();
-            resultNode.put("local", joinPrecTempValue.get("local"));
-            resultNode.put("temperatura", joinPrecTempValue.get("temperatura"));
-            resultNode.put("pp", joinPrecTempValue.get("pp"));
-            resultNode.put("uv", uvValue.get("uv_index"));
+            resultNode.put("local", filteredValue.get("local"));
+            resultNode.put("temperatura", filteredValue.get("temperatura"));
+            resultNode.put("pp", filteredValue.get("pp"));
+            resultNode.put("uv", filteredValue.get("uv"));
+            resultNode.put("hora", filteredValue.get("hora"));
+            resultNode.put("sunrise", sunhourValue.get("sunrise"));
+            resultNode.put("sunset", sunhourValue.get("sunset"));
             return resultNode;
         });
-        
-        // Filter null values
-        KTable<String, JsonNode> filteredTable = joinTable.filter((key, value) -> {
-            if (value == null) {
-                return false; // Exclude null values
+
+        // Map values that are during day
+        KTable<String, JsonNode> mappedTable = joinedTable.mapValues((key, value) -> {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
+
+            LocalDateTime sunrise = LocalDateTime.parse(value.get("sunrise").asText(), formatter);
+            LocalDateTime sunset = LocalDateTime.parse(value.get("sunset").asText(), formatter);
+            LocalDateTime hour = LocalDateTime.parse(value.get("hora").asText(), formatter);
+            
+            ((ObjectNode) value).remove("sunset");
+            ((ObjectNode) value).remove("sunrise");
+            
+            // Check if hour is between sunrise and sunset
+            if (hour.isAfter(sunrise) && hour.isBefore(sunset)) {
+                ((ObjectNode) value).put("isDay", true);
+            } else {
+                ((ObjectNode) value).put("isDay", false);
             }
             
-            // Check if any field within the JSON object is null
-            if (value.get("local") == NullNode.getInstance() || 
-                value.get("temperatura") == NullNode.getInstance() || 
-                value.get("pp") == NullNode.getInstance() || 
-                value.get("uv") == NullNode.getInstance()) {
-                return false; // Exclude if any field is null
+            // Check if good weather conditions
+            if (value.get("temperatura").asDouble() > 20 && value.get("uv").asDouble() < 5 && value.get("pp").asDouble() < 30) {
+                ((ObjectNode) value).put("boaHora", true);
+            } else {
+                ((ObjectNode) value).put("boaHora", false);
             }
             
-            return true; // Include if all fields are non-null
+            return value;
         });
-        
+
         // Convert the joinedTable to a stream
-        KStream<String, JsonNode> joinedStream = filteredTable.toStream();
+        KStream<String, JsonNode> joinedStream = mappedTable.toStream();
 
         // Print the final events to the console
         joinedStream.foreach((key, value) -> System.out.println("Event: " + value + " Key: " + key));
         
         // Write the final events back to Kafka
-        joinedStream.to("beachDay", Produced.with(stringSerde, jsonSerde));
+        joinedStream.to("beachHour", Produced.with(stringSerde, jsonSerde));
 
 		KafkaStreams streams = new KafkaStreams(builder.build(), props);
 		streams.start();
