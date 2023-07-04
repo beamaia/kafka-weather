@@ -12,7 +12,7 @@ router = APIRouter()
 CITIES = json.loads(open('assets/cities.json', 'r').read())
 
 @router.get("/all_beach_day/",  tags=["Beach Day"])
-async def get_all_beach_day() -> list[BeachDayBase]:
+async def get_all_beach_day() -> List[BeachDayBase]:
     """
     Create new category.
     """
@@ -22,7 +22,7 @@ async def get_all_beach_day() -> list[BeachDayBase]:
     return messages
 
 @router.get("/beach_day/",  tags=["Beach Day"])
-async def get_all_beach_day_city(city: str = Query(..., description="City to check beach day", enum=list(CITIES.keys()))) -> list[BeachDayBase]:
+async def get_all_beach_day_city(city: str = Query(..., description="City to check beach day", enum=list(CITIES.keys()))) -> List[BeachDayBase]:
     """
     Create new category.
     """

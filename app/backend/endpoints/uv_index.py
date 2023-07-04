@@ -12,7 +12,7 @@ router = APIRouter()
 CITIES = json.loads(open('assets/cities.json', 'r').read())
 
 @router.get("/all_uv_index/",  tags=["UV Index"])
-async def get_all_uv_index() -> list[UvIndexBase]:
+async def get_all_uv_index() -> List[UvIndexBase]:
     """
     Create new category.
     """
@@ -22,7 +22,7 @@ async def get_all_uv_index() -> list[UvIndexBase]:
     return messages
 
 @router.get("/uv_index/",  tags=["UV Index"])
-async def get_all_uv_index_city(city: str = Query(..., description="City to check beach hour", enum=list(CITIES.keys()))) -> list[UvIndexBase]:
+async def get_all_uv_index_city(city: str = Query(..., description="City to check beach hour", enum=list(CITIES.keys()))) -> List[UvIndexBase]:
     """
     Create new category.
     """

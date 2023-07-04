@@ -57,7 +57,7 @@ class GenericConsumer:
 
         while True:
             print("Attempting to poll data...")
-            partitions = self.consumer.poll(timeout_ms=1000)
+            partitions = self.consumer.poll(timeout_ms=10000)
             
             if not len(partitions):
                 break
@@ -83,11 +83,12 @@ class GenericConsumer:
         """
         messages = self.__get_messages()
 
-        for message in messages:
-            print(message)
 
         if city:
             messages = self.__filter_city(messages, city)
+        
+        for message in messages:
+            print(message)
 
         return messages
 
