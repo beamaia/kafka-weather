@@ -72,7 +72,7 @@ class BeachDay{
             .groupByKey()           
             .reduce((key, value) -> {
                 // print value
-                System.out.println("value: " + value);
+                System.out.println("value: " + value + "\n\n\n\n\n\n");
                 
                 // get intervals strings
                 String intervalsString= value.get("intervalos").asText();
@@ -165,8 +165,9 @@ class BeachDay{
                 // create copy of value
                 ObjectNode newValue = JsonNodeFactory.instance.objectNode();
                 newValue.put("local", value.get("local").asText());
-                newValue.put("dia", value.get("dia").asText());
+                newValue.put("boaHora", value.get("boaHora").asText());
                 newValue.put("isDay", value.get("isDay").asText());
+                newValue.put("dia", value.get("dia").asText());
                 newValue.put("intervalos", newIntervals.toString());
 
                 return newValue;
@@ -206,8 +207,8 @@ class BeachDay{
                     // create copy of value
                     ObjectNode newValue = JsonNodeFactory.instance.objectNode();
                     newValue.put("local", value.get("local").asText());
-                    newValue.put("dia", value.get("dia").asText());
                     newValue.put("isDay", value.get("isDay").asText());
+                    newValue.put("dia", value.get("dia").asText());
                     newValue.put("inicio", interval.get("inicio").asText());
                     newValue.put("fim", interval.get("fim").asText());
 
