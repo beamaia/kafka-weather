@@ -42,7 +42,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import java.util.ArrayList;
 import java.util.List;
 
-class BeachDayOrdered{  
+class BeachDayGrouped{  
 	public static void main(String[] args){    
         // Configuring serializers
 		Serde<String> stringSerde = Serdes.String();
@@ -168,6 +168,7 @@ class BeachDayOrdered{
             result.put("local", value.get("local").asText());
             result.put("boaHora", value.get("boaHora").asBoolean());
             result.put("isDay", value.get("isDay").asBoolean());
+            result.put("dia", value.get("dia").asText());
             result.put("intervalos", jsonNodes.toString());
 
             return result;
@@ -180,7 +181,7 @@ class BeachDayOrdered{
         joinedStream.foreach((key, value) -> System.out.println("Event: " + value + " Key: " + key));
         
         // Write the final events back to Kafka
-        joinedStream.to("beachDayOrdered", Produced.with(stringSerde, jsonSerde));
+        joinedStream.to("beachDayGrouped", Produced.with(stringSerde, jsonSerde));
 
 		KafkaStreams streams = new KafkaStreams(builder.build(), props);
 		streams.start();
