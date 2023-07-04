@@ -39,6 +39,7 @@ dependencies {
 //     maxParallelForks = Runtime.runtime.availableProcessors() // Run tasks in parallel using available processors
 // }
 
+
 logging.captureStandardOutput LogLevel.ERROR
 
 
@@ -57,8 +58,13 @@ task runSunHour(type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
 }
 
-task runBeachDayOrdered(type: JavaExec) {
-    main = 'kafkaWeather.BeachDayOrdered' // Replace with the fully qualified name of your class
+task runBeachDayGrouped(type: JavaExec) {
+    main = 'kafkaWeather.BeachDayGrouped' // Replace with the fully qualified name of your class
+    classpath = sourceSets.main.runtimeClasspath
+}
+
+task runBeachDay(type: JavaExec) {
+    main = 'kafkaWeather.BeachDay' // Replace with the fully qualified name of your class
     classpath = sourceSets.main.runtimeClasspath
 }
 
