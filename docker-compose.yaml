@@ -47,3 +47,113 @@ services:
         environment:
             - KAFKA_SERVER=kafka
         command: sh -c "sleep 10s && uvicorn main:app --reload --host 0.0.0.0 --port 8000"
+
+    ########################################################################
+    # Producers
+    weather:
+        build: 
+            context: .
+        container_name: weather
+        tty: true
+        depends_on:
+            - zookeeper
+            - kafka
+            - topics
+        environment:
+            - KAFKA_SERVER=kafka
+        command: sh -c "sleep 60s && python3 producers/weather_producer.py"
+
+    sunsetsunrise:
+        build: 
+            context: .
+        container_name: sunsetsunrise
+        tty: true
+        depends_on:
+            - zookeeper
+            - kafka
+            - topics
+        environment:
+            - KAFKA_SERVER=kafka
+        command: sh -c "sleep 60s && python3 producers/sunset_sunrise_producer.py"
+    
+    uv:
+        build: 
+            context: .
+        container_name: uv
+        tty: true
+        depends_on:
+            - zookeeper
+            - kafka
+            - topics
+        environment:
+            - KAFKA_SERVER=kafka
+        command: sh -c "sleep 60s && python3 producers/uv_producer.py"
+
+    ########################################################################
+    # Consumer producers
+    sunhour:
+        build: 
+            context: .
+        container_name: sunhour
+        tty: true
+        depends_on:
+            - zookeeper
+            - kafka
+            - topics
+        environment:
+            - KAFKA_SERVER=kafka
+        command: sh -c "sleep 60s && gradle runSunHour"
+
+    beachhourfiltered:
+        build: 
+            context: .
+        container_name: beachhourfiltered
+        tty: true
+        depends_on:
+            - zookeeper
+            - kafka
+            - topics
+        environment:
+            - KAFKA_SERVER=kafka
+        command: sh -c "sleep 60s && gradle runBeachHourFiltered"
+
+    beachhour:
+        build: 
+            context: .
+        container_name: beachhour
+        tty: true
+        depends_on:
+            - zookeeper
+            - kafka
+            - topics
+        environment:
+            - KAFKA_SERVER=kafka
+        command: sh -c "sleep 60s && gradle runBeachHour"
+
+    beachdaygrouped:
+        build: 
+            context: .
+        container_name: beachdaygrouped
+        tty: true
+        depends_on:
+            - zookeeper
+            - kafka
+            - topics
+        environment:
+            - KAFKA_SERVER=kafka
+        command: sh -c "sleep 60s && gradle runBeachDayGrouped"
+
+    beachday:
+        build: 
+            context: .
+        container_name: beachday
+        tty: true
+        depends_on:
+            - zookeeper
+            - kafka
+            - topics
+        environment:
+            - KAFKA_SERVER=kafka
+        command: sh -c "sleep 60s && gradle runBeachDay"
+    
+
