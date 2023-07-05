@@ -62,17 +62,17 @@ class BeachDay{
 		final Consumed<String, JsonNode> consumed = Consumed.with(stringSerde, jsonSerde);
 
 		final StreamsBuilder builder = new StreamsBuilder();
-        final KStream<String, JsonNode> beachHour = builder.stream("beachDayGrouped", consumed);
+        final KStream<String, JsonNode> beachDayGrouped = builder.stream("beachDayGrouped", consumed);
 
         final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
 
         // Join consecutives periods in intervals
-        KTable<String, JsonNode> joinedIntervals = beachHour
+        KTable<String, JsonNode> joinedIntervals = beachDayGrouped
             .selectKey((key, value) -> value.get("local").asText() + value.get("dia").asText() + value.get("isDay").asText())
             .groupByKey()           
             .reduce((key, value) -> {
                 // print value
-                System.out.println("value: " + value + "\n\n\n\n\n\n");
+                System.out.println("value: " + value + "\n");
                 
                 // get intervals strings
                 String intervalsString= value.get("intervalos").asText();
@@ -98,57 +98,66 @@ class BeachDay{
                 // create a new array to store the new intervals
                 ArrayNode newIntervals = JsonNodeFactory.instance.arrayNode();
 
-                // create loop to join consecutive intervals
-                while (intervals.size() > 1) {
-                    // get the first interval
-                    JsonNode outsideLoop = intervals.get(0);
-
-                    // remove the first interval
-                    intervals.remove(0);
-                    
-                    // aux node
-                    ObjectNode auxNode = JsonNodeFactory.instance.objectNode();
-                    
-                    // aux node to store outsideLoop
-                    auxNode.put("hora", outsideLoop.get("hora").asText());
-
-                    // start node with aux value
+                if (intervals.size() == 1) {
+                    JsonNode auxNode = intervals.get(0);
                     ObjectNode iniEnd = JsonNodeFactory.instance.objectNode();
                     iniEnd.put("inicio", auxNode.get("hora").asText());
                     iniEnd.put("fim", auxNode.get("hora").asText());
-                    
-                    // iter to get the next interval
-                    while (intervals.size() > 0) {
-
-                        LocalDateTime startInterval = LocalDateTime.parse(auxNode.get("hora").asText(), formatter);
-
-                        // get the next interval
-                        JsonNode nextInterval = intervals.get(0);
-
-                        // get the start of the next interval
-                        LocalDateTime startNextInterval = LocalDateTime.parse(nextInterval.get("hora").asText(), formatter);
-
-                        // check if the next interval is consecutive
-                        if (startInterval.plusHours(1).equals(startNextInterval)) {
-                            // remove the first interval
-                            intervals.remove(0);
-
-                            // update fim
-                            iniEnd.put("fim", nextInterval.get("hora").asText());
-                            auxNode = (ObjectNode) nextInterval;
-
-                        } else {
-                            break;
-                        }
-                    
-                    }
-
-                    // add the new interval to the new intervals array
                     newIntervals.add(iniEnd);
 
-                    // verify if length is 0
-                    if (intervals.size() == 0) {
-                        break;
+                } else {
+                // create loop to join consecutive intervals
+                    while (intervals.size() > 1) {
+                        // get the first interval
+                        JsonNode outsideLoop = intervals.get(0);
+
+                        // remove the first interval
+                        intervals.remove(0);
+                        
+                        // aux node
+                        ObjectNode auxNode = JsonNodeFactory.instance.objectNode();
+                        
+                        // aux node to store outsideLoop
+                        auxNode.put("hora", outsideLoop.get("hora").asText());
+
+                        // start node with aux value
+                        ObjectNode iniEnd = JsonNodeFactory.instance.objectNode();
+                        iniEnd.put("inicio", auxNode.get("hora").asText());
+                        iniEnd.put("fim", auxNode.get("hora").asText());
+                        
+                        // iter to get the next interval
+                        while (intervals.size() > 0) {
+
+                            LocalDateTime startInterval = LocalDateTime.parse(auxNode.get("hora").asText(), formatter);
+
+                            // get the next interval
+                            JsonNode nextInterval = intervals.get(0);
+
+                            // get the start of the next interval
+                            LocalDateTime startNextInterval = LocalDateTime.parse(nextInterval.get("hora").asText(), formatter);
+
+                            // check if the next interval is consecutive
+                            if (startInterval.plusHours(1).equals(startNextInterval)) {
+                                // remove the first interval
+                                intervals.remove(0);
+
+                                // update fim
+                                iniEnd.put("fim", nextInterval.get("hora").asText());
+                                auxNode = (ObjectNode) nextInterval;
+
+                            } else {
+                                break;
+                            }
+                        
+                        }
+
+                        // add the new interval to the new intervals array
+                        newIntervals.add(iniEnd);
+
+                        // verify if length is 0
+                        if (intervals.size() == 0) {
+                            break;
+                        }
                     }
                 }
 
@@ -204,11 +213,13 @@ class BeachDay{
 
                 // create loop to create individual events
                 for (JsonNode interval : intervals) {
+                    System.out.println("interval: " + interval + "\n");
                     // create copy of value
                     ObjectNode newValue = JsonNodeFactory.instance.objectNode();
                     newValue.put("local", value.get("local").asText());
                     newValue.put("isDay", value.get("isDay").asText());
                     newValue.put("dia", value.get("dia").asText());
+                    newValue.put("boaHora", value.get("boaHora").asText());
                     newValue.put("inicio", interval.get("inicio").asText());
                     newValue.put("fim", interval.get("fim").asText());
 
@@ -223,9 +234,7 @@ class BeachDay{
         // Print the final events to the console
         events.foreach((key, value) -> System.out.println("Event: " + value + " Key: " + key));
 
-        // Print the final events to the console
-        events.foreach((key, value) -> System.out.println("Event: " + value + " Key: " + key));
-        
+    
         // Write the final events back to Kafka
         events.to("beachDay", Produced.with(stringSerde, jsonSerde));
 
