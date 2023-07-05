@@ -5,7 +5,8 @@ from pydantic import BaseModel
 # Shared properties
 class BeachDayBase(BaseModel):
     local: str = None
-    boaHora: str = None
+    isDay: bool = None
+    boaHora: bool = None
     dia: str = None
     inicio: str = None 
     fim: str = None
