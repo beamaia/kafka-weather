@@ -33,7 +33,7 @@ export default function TopBar({isDayState, cityState, byPeriodState}) {
                 className={classes.text}
             >
                 {keys.map((city, index) => (
-                    <MenuItem className={classes.text} key={index} value={city}>{citiesEnum[city]}</MenuItem>
+                    <MenuItem className={classes.text} key={index} value={citiesEnum[city]}>{citiesEnum[city]}</MenuItem>
                 ))}
             </Select>
             </FormControl>
