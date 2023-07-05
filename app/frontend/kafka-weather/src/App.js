@@ -17,14 +17,14 @@ function App() {
 
 
   useEffect(() => {
-    // TODO: pegar da api
-    setIsLoading(true)
     const hourDay = byPeriod ? 'day' : 'hour';
-
+    
     if (city) {
+      setIsLoading(true)
+
       api.get(`/beach_${hourDay}/?city=${city}`).then((response) => {
-        const { data } = response.data;
-        
+        const data = response.data;
+
         setFullData(data)
 
         if(!byPeriod) {
@@ -32,10 +32,11 @@ function App() {
         } else {
           setBeachData(data.filter((item) => item.boaHora))
         }
-  
+        
         setIsLoading(false)
       })
       .catch((reason) => {
+        setIsLoading(false)
         console.error(reason);
       });
     }
@@ -44,15 +45,25 @@ function App() {
 
   useEffect(() => {
     if (checkedIsDay && fullData) {
-      setBeachData(fullData.filter((item) =>  item.isDay))
+      setBeachData(fullData.filter((item) =>  {
+        console.log(item.isDay, typeof item.isDay);
+        return item.isDay
+      }))
+    } else if (!checkedIsDay && fullData) {
+      setBeachData(fullData)
     }
   }, [checkedIsDay, fullData])
 
   return (
-    <Grid style={{height: '100%', width: '100%', padding: '50px'}}>
+    <Grid style={{height: '100vh', width: '100%', padding: '50px'}}>
       <TopBar isDayState={[checkedIsDay, setCheckedIsDay]} cityState={[city, setCity]} byPeriodState={[byPeriod, setByPeriod]} />
-      {isLoading && <CircularProgress color="success" />}
-      {beachData && <Calendar data={beachData} />}
+      {isLoading ? 
+        <Grid container spacing={2} style={{display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%'}}>
+          <CircularProgress  />
+        </Grid>
+      : 
+        beachData && <Calendar data={beachData} />
+      }
     </Grid>
   );
 }
