@@ -26,12 +26,6 @@ function App() {
         const data = response.data;
 
         setFullData(data)
-
-        if(!byPeriod) {
-          setBeachData(data.filter((item) => item.boaHora).map((item) => ({...item, inicio: item.hora, fim: DateTime.fromISO(item.hora).plus({hours: 1}).toISO()})))
-        } else {
-          setBeachData(data.filter((item) => item.boaHora))
-        }
         
         setIsLoading(false)
       })
@@ -43,16 +37,23 @@ function App() {
 
   }, [byPeriod, city])
 
+
   useEffect(() => {
     if (checkedIsDay && fullData) {
-      setBeachData(fullData.filter((item) =>  {
-        console.log(item.isDay, typeof item.isDay);
-        return item.isDay
-      }))
+      const dayData = fullData.filter((item) =>  item.isDay)
+      if(!byPeriod) {
+        setBeachData(dayData.filter((item) => item.boaHora).map((item) => ({...item, inicio: item.hora, fim: DateTime.fromISO(item.hora).plus({hours: 1}).toISO()})))
+      } else {
+        setBeachData(dayData.filter((item) => item.boaHora))
+      }
     } else if (!checkedIsDay && fullData) {
-      setBeachData(fullData)
+      if(!byPeriod) {
+        setBeachData(fullData.filter((item) => item.boaHora).map((item) => ({...item, inicio: item.hora, fim: DateTime.fromISO(item.hora).plus({hours: 1}).toISO()})))
+      } else {
+        setBeachData(fullData.filter((item) => item.boaHora))
+      }
     }
-  }, [checkedIsDay, fullData])
+  }, [checkedIsDay, fullData, byPeriod])
 
   return (
     <Grid style={{height: '100vh', width: '100%', padding: '50px'}}>
