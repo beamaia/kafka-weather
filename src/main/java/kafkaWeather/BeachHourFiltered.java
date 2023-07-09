@@ -81,7 +81,6 @@ class BeachHourFiltered{
         // Join the sunriseTable and sunsetTable based on 'local' key
         KTable<String, JsonNode> joinTable = tempTable
         .join(precTable, (tempValue, precValue) -> {
-            // System.out.println("FIRST" + "TempValue: " + tempValue + " PrecValue: " + precValue);
             ObjectNode resultNode = JsonNodeFactory.instance.objectNode();
             resultNode.put("local", tempValue.get("local"));
             resultNode.put("temperatura", tempValue.get("temperatura"));
@@ -89,7 +88,6 @@ class BeachHourFiltered{
             resultNode.put("hora", tempValue.get("hora"));
             return resultNode;
         }).join(uvTable, (joinPrecTempValue, uvValue) -> {
-            // System.out.println("SECOND" + "JoinPrecTempValue: " + joinPrecTempValue + " uvValue: " + uvValue);
             ObjectNode resultNode = JsonNodeFactory.instance.objectNode();
             resultNode.put("local", joinPrecTempValue.get("local"));
             resultNode.put("temperatura", joinPrecTempValue.get("temperatura"));
@@ -101,7 +99,6 @@ class BeachHourFiltered{
         
         // Filter null values
         KTable<String, JsonNode> filteredTable = joinTable.filter((key, value) -> {
-            // System.out.println("Key: " + key + " Value: " + value);
             if (value == null) {
                 return false; // Exclude null values
             }

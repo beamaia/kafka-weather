@@ -67,12 +67,8 @@ class BeachDay{
         final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
 
         // Join consecutives periods in intervals
-        KTable<String, JsonNode> joinedIntervals = beachDayGrouped
-            .selectKey((key, value) -> value.get("local").asText() + value.get("dia").asText() + value.get("isDay").asText())
-            .groupByKey()
-            .reduce((key, value) -> {
-                // print value
-                System.out.println("value: " + value + "\n");
+        KStream<String, JsonNode> joinedIntervals = beachDayGrouped
+            .mapValues((key, value) -> {
                 
                 // get intervals strings
                 String intervalsString= value.get("intervalos").asText();
@@ -184,13 +180,8 @@ class BeachDay{
 
             });
         
-        joinedIntervals.toStream().foreach((key, value) ->
-            System.out.println("joinedIntervals: " + value + "\n")
-        );
-        
         // break every value in interval into new events
         KStream<String, JsonNode> events = joinedIntervals
-            .toStream()
             .flatMapValues(value -> {
                 // get intervals strings
                 String intervalsString= value.get("intervalos").asText();
@@ -218,8 +209,6 @@ class BeachDay{
 
                 // create loop to create individual events
                 for (JsonNode interval : intervals) {
-                    System.out.println("interval: " + interval + "\n");
-                    System.out.println("value: " + value + "\n");
                     // create copy of value
                     ObjectNode newValue = JsonNodeFactory.instance.objectNode();
                     newValue.put("local", value.get("local").asText());
