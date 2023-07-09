@@ -2,6 +2,10 @@
 # Start with ubuntu image
 FROM ubuntu:22.04
 
+# windows
+# ENV ARQ amd64 
+
+# apple
 ENV ARQ arm64
 
 # Update and install curl
