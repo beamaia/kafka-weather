@@ -13,7 +13,7 @@ class GenericConsumer:
     def __init__(self, topic):
         server = config('KAFKA_SERVER')
         # Creates kafka consumer and producer
-        self.consumer = KafkaConsumer(bootstrap_servers=f'{server}:9092', auto_offset_reset='earliest', value_deserializer=lambda x: json.loads(x))
+        self.consumer = KafkaConsumer(bootstrap_servers=f'{server}:9092', auto_offset_reset='earliest', value_deserializer=lambda x: json.loads(x), enable_auto_commit=False, fetch_max_wait_ms=10000)
         
         # Subscribes to the beachHour topic in order to consume events
         self.topic = topic
@@ -57,7 +57,7 @@ class GenericConsumer:
 
         while True:
             print("Attempting to poll data...")
-            partitions = self.consumer.poll(timeout_ms=10000)
+            partitions = self.consumer.poll(timeout_ms=10000, update_offsets=False)
             
             if not len(partitions):
                 break

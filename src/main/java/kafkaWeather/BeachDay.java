@@ -69,7 +69,7 @@ class BeachDay{
         // Join consecutives periods in intervals
         KTable<String, JsonNode> joinedIntervals = beachDayGrouped
             .selectKey((key, value) -> value.get("local").asText() + value.get("dia").asText() + value.get("isDay").asText())
-            .groupByKey()           
+            .groupByKey()
             .reduce((key, value) -> {
                 // print value
                 System.out.println("value: " + value + "\n");
@@ -91,6 +91,7 @@ class BeachDay{
                         intervals.add(jsonNode);
                     }
                 } catch (JsonProcessingException e) {
+                    System.out.println("Error: reduce");
                     e.printStackTrace();
                 }
 
@@ -182,7 +183,10 @@ class BeachDay{
                 return newValue;
 
             });
-
+        
+        joinedIntervals.toStream().foreach((key, value) ->
+            System.out.println("joinedIntervals: " + value + "\n")
+        );
         
         // break every value in interval into new events
         KStream<String, JsonNode> events = joinedIntervals
@@ -205,6 +209,7 @@ class BeachDay{
                         intervals.add(jsonNode);
                     }
                 } catch (JsonProcessingException e) {
+                    System.out.println("Error: flatMapValues");
                     e.printStackTrace();
                 }
 
@@ -214,6 +219,7 @@ class BeachDay{
                 // create loop to create individual events
                 for (JsonNode interval : intervals) {
                     System.out.println("interval: " + interval + "\n");
+                    System.out.println("value: " + value + "\n");
                     // create copy of value
                     ObjectNode newValue = JsonNodeFactory.instance.objectNode();
                     newValue.put("local", value.get("local").asText());

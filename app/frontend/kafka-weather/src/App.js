@@ -17,6 +17,10 @@ function App() {
 
 
   useEffect(() => {
+    console.log('fullData', fullData);
+    }, [fullData])
+
+  useEffect(() => {
     const hourDay = byPeriod ? 'day' : 'hour';
     
     if (city) {
@@ -25,7 +29,7 @@ function App() {
       api.get(`/beach_${hourDay}/?city=${city}`).then((response) => {
         const data = response.data;
 
-        setFullData(data)
+        setFullData(data.filter((item) => item.boaHora))
         
         setIsLoading(false)
       })

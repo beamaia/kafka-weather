@@ -117,13 +117,14 @@ class BeachHour{
         });
 
         // Convert the joinedTable to a stream
-        KStream<String, JsonNode> joinedStream = mappedTable.toStream();
+        KStream<String, JsonNode> joinedStream = mappedTable.toStream().selectKey((key, value) -> value.get("local").asText());
 
         // Print the final events to the console
         joinedStream.foreach((key, value) -> System.out.println("Event: " + value + " Key: " + key));
         
         // Write the final events back to Kafka
         joinedStream.to("beachHour", Produced.with(stringSerde, jsonSerde));
+        joinedStream.to("beachHourCopy", Produced.with(stringSerde, jsonSerde));
 
 		KafkaStreams streams = new KafkaStreams(builder.build(), props);
 		streams.start();

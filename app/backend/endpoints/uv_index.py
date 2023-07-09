@@ -6,6 +6,7 @@ from app.backend.models.kafka_consumers.generic import GenericConsumer
 from app.backend.models.schemas.uv_index import UvIndexBase
 
 import json
+from datetime import datetime
 
 router = APIRouter()
 
@@ -18,7 +19,8 @@ async def get_all_uv_index() -> List[UvIndexBase]:
     """
     messages = GenericConsumer(topic="uvIndex").get()
     print(messages)
-   
+
+    messages = sorted(messages, key=lambda x: datetime.strptime(x['hora'], '%Y-%m-%dT%H:%M'))
     return messages
 
 @router.get("/uv_index/",  tags=["UV Index"])
@@ -28,5 +30,5 @@ async def get_all_uv_index_city(city: str = Query(..., description="City to chec
     """
     messages = GenericConsumer(topic='uvIndex').get(city=city)
     print(messages)
-   
+    messages = sorted(messages, key=lambda x: datetime.strptime(x['hora'], '%Y-%m-%dT%H:%M'))
     return messages

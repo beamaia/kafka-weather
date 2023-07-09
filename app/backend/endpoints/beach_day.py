@@ -6,6 +6,7 @@ from app.backend.models.kafka_consumers.generic import GenericConsumer
 from app.backend.models.schemas.beach_day import BeachDayBase
 
 import json
+from datetime import datetime
 
 router = APIRouter()
 
@@ -18,7 +19,8 @@ async def get_all_beach_day() -> List[BeachDayBase]:
     """
     messages = GenericConsumer(topic="beachDay").get()
     print(messages)
-   
+    # transform key inicio string to datetime and sort by datetime
+    messages = sorted(messages, key=lambda x: datetime.strptime(x['inicio'], '%Y-%m-%dT%H:%M'))
     return messages
 
 @router.get("/beach_day/",  tags=["Beach Day"])
@@ -28,6 +30,9 @@ async def get_all_beach_day_city(city: str = Query(..., description="City to che
     """
     messages = GenericConsumer(topic='beachDay').get(city=city)
     print(messages)
+
+    # transform key inicio string to datetime and sort by datetime
+    messages = sorted(messages, key=lambda x: datetime.strptime(x['inicio'], '%Y-%m-%dT%H:%M'))
    
     return messages
 

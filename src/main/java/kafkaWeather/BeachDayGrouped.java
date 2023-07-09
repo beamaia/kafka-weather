@@ -175,7 +175,7 @@ class BeachDayGrouped{
         });
 
         // To stream
-        KStream<String, JsonNode> joinedStream = orderedTable.toStream();
+        KStream<String, JsonNode> joinedStream = orderedTable.toStream().selectKey((key, value) -> value.get("local").asText());
 
         // Print the final events to the console
         joinedStream.foreach((key, value) -> System.out.println("Event: " + value + " Key: " + key));

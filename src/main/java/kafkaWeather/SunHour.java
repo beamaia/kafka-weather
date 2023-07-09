@@ -71,7 +71,7 @@ class SunHour{
         });
 
         // Convert the joinedTable to a stream
-        KStream<String, JsonNode> joinedStream = joinedTable.toStream();
+        KStream<String, JsonNode> joinedStream = joinedTable.toStream().selectKey((key, value) -> value.get("local").asText());
 
         // Print the final events to the console
         joinedStream.foreach((key, value) -> System.out.println("Event: " + value + " Key: " + key));
